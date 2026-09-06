@@ -1,4 +1,5 @@
-using System.Reflection;
+using System.Text;
+using WhereFrom.Cli;
 
-var version = Assembly.GetExecutingAssembly().GetName().Version;
-Console.WriteLine($"WhereFrom {version?.ToString(3)}");
+Console.OutputEncoding = new UTF8Encoding(false);
+return CommandLine.Run(args, Console.Out, Console.Error);

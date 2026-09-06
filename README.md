@@ -1,54 +1,87 @@
 # WhereFrom
 
-WhereFrom 是一个 Windows-first、local-first 的文件来源追踪工具。
-当前仅完成 **Milestone 0：工程骨架**，CLI 只输出版本，还不能查询文件来源。
+查看 Windows 文件中已有的来源线索。
 
-## 开发环境
+下载了一个 ZIP、安装包或 PDF，过一段时间却忘了它来自哪里？WhereFrom 帮你查看文件里保留的来源信息，例如下载网址和来源页面。
 
-- Windows，当前验证目标为 Windows x64。
-- [.NET 10 SDK](https://learn.microsoft.com/dotnet/core/install/windows)（仅安装运行时不能编译）。
+项目仍处于早期开发。目前提供命令行工具，用于显示 Windows `Zone.Identifier` 中的原始文本；文件可能没有这项信息，也可能只有部分字段。
 
-在仓库根目录运行：
+## 快速开始
+
+从源码运行需要 **Windows** 和 [.NET 10 SDK](https://learn.microsoft.com/dotnet/core/install/windows)。只有 .NET 运行时还不够。
+
+下载或克隆本仓库后，在仓库根目录打开 PowerShell：
 
 ```powershell
-dotnet restore
 dotnet build
-dotnet test
-dotnet run --project src/WhereFrom.Cli -- --version
+dotnet run --project src/WhereFrom.Cli -- debug-zone "C:\Users\YourName\Downloads\example.zip"
 ```
 
-CLI 预期输出：
+将示例路径替换为要查看的文件。路径包含空格时，请保留双引号。
+
+某个文件的输出可能是：
+
+```ini
+[ZoneTransfer]
+ZoneId=3
+HostUrl=https://example.com/download/example.zip
+ReferrerUrl=https://example.com/download
+```
+
+工具显示文件中实际存在的文本，不补齐缺失字段，也不推断来源是否可信。
+
+如果没有找到这项元数据，会显示：
 
 ```text
-WhereFrom 0.1.0
+No Zone.Identifier stream found.
 ```
 
-也可在构建后直接运行：
+空的元数据流、文件不存在、权限不足和读取失败会有各自的提示。
+
+## 命令
+
+构建后，也可以直接运行程序：
 
 ```powershell
+.\src\WhereFrom.Cli\bin\Debug\net10.0-windows\wherefrom.exe debug-zone "C:\path\to\file.exe"
 .\src\WhereFrom.Cli\bin\Debug\net10.0-windows\wherefrom.exe --version
 ```
 
-本阶段 CLI 只有启动输出，不解析参数；`--version` 与不带参数的输出相同。
-首次还原测试依赖需要访问 NuGet；CLI 运行本身不联网。
+当前可用命令是 `debug-zone <file>` 和 `--version`。尚不支持目录扫描、格式化来源报告或 JSON 输出，也没有图形界面和右键菜单。
 
-## 项目结构
+### 在脚本中使用
 
-| 项目                                     | 本阶段职责                                 | 项目引用         |
-| ---------------------------------------- | ------------------------------------------ | ---------------- |
-| `src/WhereFrom.Core`                     | 平台无关的类库骨架，暂不定义领域模型       | 无               |
-| `src/WhereFrom.Platform.Windows`         | Windows 实现的类库骨架，暂不读取来源元数据 | Core             |
-| `src/WhereFrom.Cli`                      | Windows 命令行入口，输出版本               | Core             |
-| `tests/WhereFrom.Core.Tests`             | 验证 Core 的目标框架与平台边界             | Core             |
-| `tests/WhereFrom.Platform.Windows.Tests` | 验证 Windows 类库的目标平台和测试运行环境  | Platform.Windows |
+读取到的原文写入标准输出；错误、空流说明和隐私提醒写入标准错误。PowerShell 中可通过 `$LASTEXITCODE` 获取结果：
 
-统一启用 nullable、implicit usings 和 warnings-as-errors。使用 xUnit，测试仅覆盖工程骨架约束，不能证明任何 ADS/MotW 行为。
+| 退出码 | 含义 |
+| --- | --- |
+| 0 | 成功读取，包括空流；或成功显示版本 |
+| 1 | 未找到 Zone.Identifier |
+| 2 | 参数或路径不合法，或输入的是目录 |
+| 3 | 文件不存在或权限不足，具体原因见提示 |
+| 4 | 读取失败、编码错误或内容超过大小限制 |
 
-## 隐私与范围
+## 隐私与安全
 
-v0.1 仅面向 Windows，保持 local-first，不加入账号、遥测或云同步。
-WhereFrom 对被检查的现有文件和 Mark of the Web 保持只读，绝不删除、修改或解除 MotW。
-当前骨架不读取或写入任何被检查文件，也不创建来源数据库。
+- **只读**：不修改被检查的文件，不删除、修改或解除 Mark of the Web。
+- **本地运行**：检查文件不需要联网，没有账号、遥测或云同步。首次构建需要下载开发依赖。
+- **原文可能包含隐私信息**：输出保留完整 URL，包括查询参数和可能存在的 token。分享输出前请检查并脱敏。
+- **来源不是安全证明**：没有来源信息不代表文件危险，有来源网址也不代表文件安全。
+
+## 使用限制
+
+- 当前仅面向 Windows；已验证环境为 Windows 11 x64 和 NTFS。其他文件系统及网络盘的行为可能不同。
+- 无法恢复不存在的来源信息，也不能仅凭“没有元数据”判断文件是否曾经下载过。
+- 这是原始文本查看工具，不验证 URL、不解释 ZoneId，也不提供文件移动后的来源关联。
+- 单次最多读取 64 KiB；超过限制时会报错，不会静默截断。
+- 默认按 UTF-8 读取，并识别字节顺序标记（BOM）；不保证兼容所有旧编码或损坏内容。
+- 为避免终端执行控制序列，危险控制字符会显示为 `\uXXXX`；换行和制表符保留。输出不属于逐字节导出。
+
+## 反馈与贡献
+
+欢迎在 [GitHub Issues](https://github.com/strategist0/WhereFrom/issues) 报告问题。请说明 Windows 版本、获取文件的方式、运行的命令及实际提示；无需上传私人文件或未经脱敏的 URL。
+
+工程设计见 [ENGINEERING.md](ENGINEERING.md)，平台验证资料见 [docs/](docs/)。
 
 ## 许可证
 
