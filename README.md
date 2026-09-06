@@ -58,6 +58,18 @@ After building, you can run the program directly from the repository root:
 
 Provide one file at a time. For a filename beginning with `-` or named `debug-zone`, use its full path or prefix it with `.\`.
 
+### Open a source page
+
+```powershell
+.\src\WhereFrom.Cli\bin\Debug\net10.0-windows\wherefrom.exe open "C:\path\to\file.zip"
+```
+
+Opens the recorded Referrer URL in your default browser, or the Source URL when no parsed Referrer is available. The selected address is printed after `Opening:`. Only valid HTTP/HTTPS URLs are allowed. If the selected address uses another scheme, the command refuses it without falling back to another URL.
+
+With no URL, it prints `No source URL is available for this file.` and returns 1. Refused URLs return 2, browser launch failures return 4, and successful dispatch returns 0. File-reading errors retain the single-file exit codes below. Exit 0 means Windows accepted the launch; it does not confirm that the page loaded.
+
+This command explicitly opens a browser and may contact the recorded website. Full query parameters and fragments are passed through. Regular queries and scans never open URLs. `open` does not support `--json`.
+
 ### Scan a directory
 
 ```powershell
@@ -116,7 +128,7 @@ For `debug-zone`, code 0 means the stream was read, including an empty stream; c
 - **Read-only:** WhereFrom does not modify inspected files or delete, change, or unblock Mark of the Web.
 - **Local:** Checking local files does not require internet access. There are no accounts, telemetry, or cloud sync. Building for the first time requires downloading development dependencies.
 - **URLs may be private:** Both reports and raw output preserve query parameters and fragments, which can contain tokens. Review and redact output before sharing it.
-- **Provenance is not a safety verdict:** Missing information does not make a file dangerous, and a recorded URL does not prove a file is safe. WhereFrom does not open or execute recorded URLs.
+- **Provenance is not a safety verdict:** Missing information does not make a file dangerous, and a recorded URL does not prove a file is safe. Only the explicit open command dispatches validated HTTP/HTTPS URLs to your default browser.
 
 ## Limitations
 
@@ -127,7 +139,7 @@ For `debug-zone`, code 0 means the stream was read, including an empty stream; c
 - Metadata reads are limited to 64 KiB. Oversized data produces an error, not silent truncation.
 - Text is decoded as UTF-8 by default, with BOM detection. Not all legacy encodings or damaged text are supported.
 - Reads are not atomic snapshots; another process can change the file during inspection.
-- Opening source pages, a GUI, Explorer integration, and file-move tracking are not available.
+- A GUI, Explorer integration, and file-move tracking are not available.
 
 ## Feedback and contributions
 

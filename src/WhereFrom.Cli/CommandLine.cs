@@ -9,7 +9,8 @@ internal static class CommandLine
         string[] args,
         TextWriter output,
         TextWriter error,
-        IProvenanceProvider? provider = null)
+        IProvenanceProvider? provider = null,
+        Action<System.Diagnostics.ProcessStartInfo>? launch = null)
     {
         if (args.Length == 1 && args[0] == "--version")
         {
@@ -37,6 +38,16 @@ internal static class CommandLine
                 return 2;
             }
             return ScanCommand.Run(args[1], output, error, provider);
+        }
+
+        if (args.Length >= 2 && args[0] == "open" && args[1] != "--json")
+        {
+            if (args.Length != 2 || args[1].StartsWith('-'))
+            {
+                error.WriteLine("Usage: wherefrom open <file>");
+                return 2;
+            }
+            return OpenCommand.Run(args[1], output, error, provider, launch);
         }
 
         var json = args.Length == 2 && args[1] == "--json";
@@ -110,6 +121,7 @@ internal static class CommandLine
         output.WriteLine("  wherefrom <file>");
         output.WriteLine("  wherefrom <file> --json");
         output.WriteLine("  wherefrom scan <directory>");
+        output.WriteLine("  wherefrom open <file>");
         output.WriteLine("  wherefrom --help");
         output.WriteLine("  wherefrom --version");
         output.WriteLine();

@@ -58,6 +58,18 @@ No provenance information found.
 
 每次查询一个文件。如果文件名以 `-` 开头或名为 `debug-zone`，请使用完整路径或加上 `.\` 前缀。
 
+### 打开来源页面
+
+```powershell
+.\src\WhereFrom.Cli\bin\Debug\net10.0-windows\wherefrom.exe open "C:\path\to\file.zip"
+```
+
+在默认浏览器中打开记录的 Referrer URL；没有可用的已解析 Referrer 时，使用 Source URL。选中的地址显示在 `Opening:` 后。只允许有效的 HTTP/HTTPS URL；选中地址使用其他协议时会明确拒绝，不回退打开另一个地址。
+
+没有 URL 时提示 `No source URL is available for this file.`，返回 1。拒绝 URL 返回 2，浏览器启动失败返回 4，成功发起打开返回 0。文件读取错误沿用下方单文件退出码。0 仅表示 Windows 接受了打开请求，不代表网页已经加载成功。
+
+此命令会主动打开浏览器，可能访问记录的网站，并传入完整查询参数和 fragment。普通查询和扫描不会打开 URL。`open` 不支持 `--json`。
+
 ### 扫描目录
 
 ```powershell
@@ -116,7 +128,7 @@ $result.sourceUrl
 - **只读**：不修改被检查的文件，不删除、修改或解除 Mark of the Web。
 - **本地运行**：检查本地文件无需互联网，没有账号、遥测或云同步。首次构建需要下载开发依赖。
 - **URL 可能含隐私信息**：报告和原始输出均保留查询参数和 fragment，其中可能包含 token。分享前请检查并脱敏。
-- **来源不是安全证明**：没有信息不代表文件危险，有来源网址也不代表文件安全。WhereFrom 不打开或执行记录的 URL。
+- **来源不是安全证明**：没有信息不代表文件危险，有来源网址也不代表文件安全。仅显式 open 命令会将通过校验的 HTTP/HTTPS URL 交给默认浏览器。
 
 ## 使用限制
 
@@ -127,7 +139,7 @@ $result.sourceUrl
 - 单次最多读取 64 KiB，超限报错，不静默截断。
 - 默认按 UTF-8 解码并检测 BOM，不保证支持所有旧编码或损坏文本。
 - 读取不是原子快照，其他进程可能在查询期间修改文件。
-- 尚不支持打开来源页面、GUI、右键菜单或文件移动追踪。
+- 尚不支持 GUI、右键菜单或文件移动追踪。
 
 ## 反馈与贡献
 

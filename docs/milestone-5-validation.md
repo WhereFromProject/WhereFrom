@@ -60,6 +60,17 @@ $LASTEXITCODE
 7. Repeat a single-file text query and a single-file `--json | ConvertFrom-Json` query; outputs should remain as accepted for M3/M4.
 8. `scan <directory> --recursive` and `scan <directory> --json` should return usage on stderr and exit 2.
 
+## User manual acceptance
+
+The user confirmed M5 acceptance on 2026-09-06:
+
+- Actual Downloads directory: 80 scanned, 64 known, 16 unknown, 0 errors, 0 skipped reparse points, exit 0.
+- Local TXT plus a nested subdirectory: only the top-level TXT was reported; scanned 1, unknown 1, exit 0.
+- Empty directory: all counts zero, exit 0.
+- Nonexistent directory: Directory not found, exit 3.
+
+The personal file inventory is intentionally omitted. These results do not add symlink or access-denied manual coverage.
+
 ## Known limitations
 
 - No atomic filesystem snapshot. Entries may change between enumeration, attribute checks and inspection; reparse checks are not a security boundary against concurrent replacement or links in ancestor paths.
