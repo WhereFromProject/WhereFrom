@@ -29,7 +29,9 @@ internal static class CommandLine
             return RunDebugZone(args[1], output, error);
         }
 
-        if (args.Length != 1 || args[0].StartsWith('-') || args[0] == "debug-zone")
+        var json = args.Length == 2 && args[1] == "--json";
+
+        if ((!json && args.Length != 1) || args[0].StartsWith('-') || args[0] == "debug-zone")
         {
             error.WriteLine("Usage: wherefrom <file> | --help | --version");
             return 2;
@@ -38,7 +40,13 @@ internal static class CommandLine
         try
         {
             var result = (provider ?? new WindowsZoneProvider()).Inspect(args[0]);
-            return ProvenanceFormatter.Write(result, output, error);
+            // Reuse the existing diagnostics and exit codes without changing text mode.
+            var exitCode = ProvenanceFormatter.Write(result, json ? TextWriter.Null : output, error);
+            if (json && exitCode is 0 or 1)
+            {
+                output.WriteLine(ProvenanceJson.Serialize(result));
+            }
+            return exitCode;
         }
         catch (Exception)
         {
@@ -90,6 +98,7 @@ internal static class CommandLine
         output.WriteLine();
         output.WriteLine("Usage:");
         output.WriteLine("  wherefrom <file>");
+        output.WriteLine("  wherefrom <file> --json");
         output.WriteLine("  wherefrom --help");
         output.WriteLine("  wherefrom --version");
         output.WriteLine();

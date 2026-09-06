@@ -58,6 +58,20 @@ No provenance information found.
 
 每次查询一个文件。如果文件名以 `-` 开头或名为 `debug-zone`，请使用完整路径或加上 `.\` 前缀。
 
+### JSON 输出
+
+在文件路径后添加 `--json`，返回一个 JSON 对象：
+
+```powershell
+$result = .\src\WhereFrom.Cli\bin\Debug\net10.0-windows\wherefrom.exe "C:\path\to\file.exe" --json | ConvertFrom-Json
+$code = $LASTEXITCODE
+$result.sourceUrl
+```
+
+版本 1 的契约始终包含 `schemaVersion`（1）、`path`（传入的路径）、`hasProvenance`（布尔值）、`zone`（`{ "id": 3, "name": "Internet" }` 或 `null`）、`sourceUrl` 和 `referrerUrl`。缺失的 URL 和未知 Zone 名称为 `null`，不会省略字段。JSON 解码后，URL 保留原有拼写、查询参数和 fragment。
+
+查询完成时，即使无来源也返回 JSON（退出码 1）。参数或读取错误不返回 JSON，请检查退出码和标准错误。元数据问题提示仅写入标准错误。不要使用 `2>&1` 将其混入 JSON 管道。
+
 ### 原始元数据
 
 诊断命令用于查看原始文本：
@@ -99,7 +113,7 @@ No provenance information found.
 - 单次最多读取 64 KiB，超限报错，不静默截断。
 - 默认按 UTF-8 解码并检测 BOM，不保证支持所有旧编码或损坏文本。
 - 读取不是原子快照，其他进程可能在查询期间修改文件。
-- 尚不支持目录扫描、JSON、打开来源页面、GUI、右键菜单或文件移动追踪。
+- 尚不支持目录扫描、打开来源页面、GUI、右键菜单或文件移动追踪。
 
 ## 反馈与贡献
 

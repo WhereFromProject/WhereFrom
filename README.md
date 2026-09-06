@@ -58,6 +58,20 @@ After building, you can run the program directly from the repository root:
 
 Provide one file at a time. For a filename beginning with `-` or named `debug-zone`, use its full path or prefix it with `.\`.
 
+### JSON output
+
+Append `--json` after the file path to return one JSON object:
+
+```powershell
+$result = .\src\WhereFrom.Cli\bin\Debug\net10.0-windows\wherefrom.exe "C:\path\to\file.exe" --json | ConvertFrom-Json
+$code = $LASTEXITCODE
+$result.sourceUrl
+```
+
+The version 1 contract always includes `schemaVersion` (1), `path` (the supplied path), `hasProvenance` (boolean), `zone` (`{ "id": 3, "name": "Internet" }` or `null`), `sourceUrl`, and `referrerUrl`. Missing URLs and unknown zone names are `null`; properties are never omitted. URLs retain their recorded spelling, query parameters, and fragments after JSON decoding.
+
+Completed queries return JSON even when no provenance is available (exit code 1). Argument and read errors return no JSON; use the exit code and standard error to distinguish them. Metadata warnings go only to standard error. Keep standard error separate from the JSON pipeline; do not merge it with `2>&1`.
+
 ### Raw metadata
 
 The diagnostic command shows the original metadata text:
@@ -99,7 +113,7 @@ For `debug-zone`, code 0 means the stream was read, including an empty stream; c
 - Metadata reads are limited to 64 KiB. Oversized data produces an error, not silent truncation.
 - Text is decoded as UTF-8 by default, with BOM detection. Not all legacy encodings or damaged text are supported.
 - Reads are not atomic snapshots; another process can change the file during inspection.
-- Directory scanning, JSON output, opening source pages, a GUI, Explorer integration, and file-move tracking are not available.
+- Directory scanning, opening source pages, a GUI, Explorer integration, and file-move tracking are not available.
 
 ## Feedback and contributions
 
