@@ -34,13 +34,13 @@ WhereFrom 0.1.0
 
 ## 项目结构
 
-| 项目 | 本阶段职责 | 项目引用 |
-| --- | --- | --- |
-| `src/WhereFrom.Core` | 平台无关的类库骨架，暂不定义领域模型 | 无 |
-| `src/WhereFrom.Platform.Windows` | Windows 实现的类库骨架，暂不读取来源元数据 | Core |
-| `src/WhereFrom.Cli` | Windows 命令行入口，输出版本 | Core |
-| `tests/WhereFrom.Core.Tests` | 验证 Core 的目标框架与平台边界 | Core |
-| `tests/WhereFrom.Platform.Windows.Tests` | 验证 Windows 类库的目标平台和测试运行环境 | Platform.Windows |
+| 项目                                     | 本阶段职责                                 | 项目引用         |
+| ---------------------------------------- | ------------------------------------------ | ---------------- |
+| `src/WhereFrom.Core`                     | 平台无关的类库骨架，暂不定义领域模型       | 无               |
+| `src/WhereFrom.Platform.Windows`         | Windows 实现的类库骨架，暂不读取来源元数据 | Core             |
+| `src/WhereFrom.Cli`                      | Windows 命令行入口，输出版本               | Core             |
+| `tests/WhereFrom.Core.Tests`             | 验证 Core 的目标框架与平台边界             | Core             |
+| `tests/WhereFrom.Platform.Windows.Tests` | 验证 Windows 类库的目标平台和测试运行环境  | Platform.Windows |
 
 统一启用 nullable、implicit usings 和 warnings-as-errors。使用 xUnit，测试仅覆盖工程骨架约束，不能证明任何 ADS/MotW 行为。
 
@@ -49,9 +49,6 @@ WhereFrom 0.1.0
 v0.1 仅面向 Windows，保持 local-first，不加入账号、遥测或云同步。
 WhereFrom 对被检查的现有文件和 Mark of the Web 保持只读，绝不删除、修改或解除 MotW。
 当前骨架不读取或写入任何被检查文件，也不创建来源数据库。
-
-Milestone 0 不包含来源读取、领域模型、scan、JSON、open、GUI、SQLite、浏览器扩展、后台服务或文件移动追踪。
-后续工作按根目录的 `AGENTS.md` 与 `MILESTONE v0.1.md` 执行；用户的最新指令优先于 `ENGINEERING.md` 中的长期规划。
 
 ## 许可证
 
