@@ -4,5 +4,6 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\WhereFrom.Core\WhereFrom.Core.csproj" />
+    <InternalsVisibleTo Include="WhereFrom.Platform.Windows.Tests" />
   </ItemGroup>
 </Project>
