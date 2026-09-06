@@ -81,7 +81,7 @@ $code
 3. Use a nonexistent path. Expect no stdout/JSON, a missing-file message on stderr and exit 3.
 4. Compare plain text output with accepted M3 behavior. Existing file and MotW data must remain unchanged.
 
-M4 user manual acceptance is pending.
+M4 user manual acceptance confirmed on 2026-09-06. User-reported PowerShell results: GitHub ZIP returned schemaVersion 1, zone 3/Internet, separate codeload Source and GitHub releases Referrer, exit 0; local TXT returned false/null evidence and exit 1; missing file reported File not found and exit 3 with no JSON; a Chinese-named PDF returned zone 3 and separate API download Source / human-facing iLovePDF Referrer, exit 0. Private download tokens are not reproduced here.
 
 ## Known limitations and exclusions
 

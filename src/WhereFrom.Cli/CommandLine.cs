@@ -29,6 +29,16 @@ internal static class CommandLine
             return RunDebugZone(args[1], output, error);
         }
 
+        if (args.Length >= 2 && args[0] == "scan" && args[1] != "--json")
+        {
+            if (args.Length != 2 || args[1].StartsWith('-'))
+            {
+                error.WriteLine("Usage: wherefrom scan <directory>");
+                return 2;
+            }
+            return ScanCommand.Run(args[1], output, error, provider);
+        }
+
         var json = args.Length == 2 && args[1] == "--json";
 
         if ((!json && args.Length != 1) || args[0].StartsWith('-') || args[0] == "debug-zone")
@@ -99,6 +109,7 @@ internal static class CommandLine
         output.WriteLine("Usage:");
         output.WriteLine("  wherefrom <file>");
         output.WriteLine("  wherefrom <file> --json");
+        output.WriteLine("  wherefrom scan <directory>");
         output.WriteLine("  wherefrom --help");
         output.WriteLine("  wherefrom --version");
         output.WriteLine();

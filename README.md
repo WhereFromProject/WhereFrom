@@ -58,6 +58,20 @@ After building, you can run the program directly from the repository root:
 
 Provide one file at a time. For a filename beginning with `-` or named `debug-zone`, use its full path or prefix it with `.\`.
 
+### Scan a directory
+
+```powershell
+.\src\WhereFrom.Cli\bin\Debug\net10.0-windows\wherefrom.exe scan "$HOME\Downloads"
+```
+
+Scans only the first level, including hidden/system files. Each row shows the filename and the first available Referrer host, Source host, or Windows zone. Valid URLs without a host are labeled `URL recorded (no host)`. Files without usable evidence show `Unknown`; failed reads show `Error`, with details on standard error. Full URLs remain available through single-file queries.
+
+The summary reports `Scanned`, `Known provenance`, `Unknown`, `Errors`, and `Skipped reparse points`. Scanned equals known + unknown + errors. Ordinary subdirectories are ignored; reparse points (including links and junctions) are skipped. If the scan directory itself is a reparse point, provide its target directory directly.
+
+A completed scan returns 0, including an empty directory or all-unknown results. Invalid directory input returns 2; a missing/inaccessible root returns 3; file read failures or an interrupted directory enumeration return 4; unexpected failures return 5. A failed file does not stop the remaining files. An incomplete enumeration is explicitly reported on standard error, with partial counts.
+
+Scanning is sequential and read-only. `--recursive` and scan `--json` are not supported. Entry order follows the filesystem; the tab-separated display may wrap long filenames in narrow terminals.
+
 ### JSON output
 
 Append `--json` after the file path to return one JSON object:
@@ -113,7 +127,7 @@ For `debug-zone`, code 0 means the stream was read, including an empty stream; c
 - Metadata reads are limited to 64 KiB. Oversized data produces an error, not silent truncation.
 - Text is decoded as UTF-8 by default, with BOM detection. Not all legacy encodings or damaged text are supported.
 - Reads are not atomic snapshots; another process can change the file during inspection.
-- Directory scanning, opening source pages, a GUI, Explorer integration, and file-move tracking are not available.
+- Opening source pages, a GUI, Explorer integration, and file-move tracking are not available.
 
 ## Feedback and contributions
 

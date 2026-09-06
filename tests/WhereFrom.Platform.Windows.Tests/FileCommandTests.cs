@@ -99,7 +99,7 @@ public class FileCommandTests
         Assert.Contains("wherefrom --version", output.ToString());
         Assert.Contains("debug-zone", output.ToString());
         Assert.Contains("wherefrom <file> --json", output.ToString());
-        Assert.DoesNotContain("scan", output.ToString());
+        Assert.Contains("wherefrom scan <directory>", output.ToString());
         Assert.DoesNotContain("open <file>", output.ToString());
         Assert.Equal("", error.ToString());
     }

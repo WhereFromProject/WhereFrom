@@ -58,6 +58,20 @@ No provenance information found.
 
 每次查询一个文件。如果文件名以 `-` 开头或名为 `debug-zone`，请使用完整路径或加上 `.\` 前缀。
 
+### 扫描目录
+
+```powershell
+.\src\WhereFrom.Cli\bin\Debug\net10.0-windows\wherefrom.exe scan "$HOME\Downloads"
+```
+
+仅扫描第一层，包含隐藏文件和系统文件。每行显示文件名，以及依次优先选择的 Referrer 主机名、Source 主机名或 Windows Zone。合法但不含主机名的 URL 显示为 `URL recorded (no host)`。无可用来源显示 `Unknown`；读取失败显示 `Error`，详情写入标准错误。完整 URL 仍可通过单文件查询查看。
+
+汇总包含 `Scanned`、`Known provenance`、`Unknown`、`Errors` 和 `Skipped reparse points`。扫描数等于已知来源数、未知数和错误数之和。普通子目录不进入；重解析点（包括链接和 junction）跳过。如果扫描目录本身是重解析点，请直接提供目标目录。
+
+扫描完成返回 0，包括空目录或全部未知的结果。目录输入不合法返回 2；根目录不存在或无权访问返回 3；文件读取失败或目录枚举中断返回 4；未预期错误返回 5。单个文件失败后继续扫描；枚举中断时会在标准错误明确提示，并给出已处理部分的统计。
+
+扫描串行执行且只读，不支持 `--recursive` 或扫描 `--json`。输出按文件系统枚举顺序排列，以制表符分隔；窄终端中的长文件名可能换行。
+
 ### JSON 输出
 
 在文件路径后添加 `--json`，返回一个 JSON 对象：
@@ -113,7 +127,7 @@ $result.sourceUrl
 - 单次最多读取 64 KiB，超限报错，不静默截断。
 - 默认按 UTF-8 解码并检测 BOM，不保证支持所有旧编码或损坏文本。
 - 读取不是原子快照，其他进程可能在查询期间修改文件。
-- 尚不支持目录扫描、打开来源页面、GUI、右键菜单或文件移动追踪。
+- 尚不支持打开来源页面、GUI、右键菜单或文件移动追踪。
 
 ## 反馈与贡献
 
