@@ -1,26 +1,55 @@
-using System.Text;
+using WhereFrom.Core;
 using WhereFrom.Platform.Windows;
 
 namespace WhereFrom.Cli;
 
 internal static class CommandLine
 {
-    public static int Run(string[] args, TextWriter output, TextWriter error)
+    public static int Run(
+        string[] args,
+        TextWriter output,
+        TextWriter error,
+        IProvenanceProvider? provider = null)
     {
-        if (args.Length == 0 || (args.Length == 1 && args[0] == "--version"))
+        if (args.Length == 1 && args[0] == "--version")
         {
             var version = typeof(CommandLine).Assembly.GetName().Version;
             output.WriteLine($"WhereFrom {version?.ToString(3)}");
             return 0;
         }
 
-        if (args.Length != 2 || args[0] != "debug-zone")
+        if (args.Length == 1 && args[0] == "--help")
         {
-            error.WriteLine("Usage: wherefrom debug-zone <file> | --version");
+            WriteHelp(output);
+            return 0;
+        }
+
+        if (args.Length == 2 && args[0] == "debug-zone")
+        {
+            return RunDebugZone(args[1], output, error);
+        }
+
+        if (args.Length != 1 || args[0].StartsWith('-') || args[0] == "debug-zone")
+        {
+            error.WriteLine("Usage: wherefrom <file> | --help | --version");
             return 2;
         }
 
-        var result = ZoneIdentifierReader.Read(args[1]);
+        try
+        {
+            var result = (provider ?? new WindowsZoneProvider()).Inspect(args[0]);
+            return ProvenanceFormatter.Write(result, output, error);
+        }
+        catch (Exception)
+        {
+            error.WriteLine("An unexpected error occurred while reading provenance information.");
+            return 5;
+        }
+    }
+
+    private static int RunDebugZone(string path, TextWriter output, TextWriter error)
+    {
+        var result = ZoneIdentifierReader.Read(path);
         switch (result.Status)
         {
             case ZoneReadStatus.Found:
@@ -31,7 +60,7 @@ internal static class CommandLine
                 else
                 {
                     error.WriteLine("Raw metadata may contain private URLs or tokens.");
-                    output.Write(EscapeControls(result.Content));
+                    output.Write(TerminalText.EscapeControls(result.Content));
                 }
                 return 0;
             case ZoneReadStatus.StreamNotFound:
@@ -55,20 +84,16 @@ internal static class CommandLine
         }
     }
 
-    private static string EscapeControls(string content)
+    private static void WriteHelp(TextWriter output)
     {
-        var output = new StringBuilder(content.Length);
-        foreach (var character in content)
-        {
-            if (char.IsControl(character) && character is not '\r' and not '\n' and not '\t')
-            {
-                output.Append($"\\u{(int)character:x4}");
-            }
-            else
-            {
-                output.Append(character);
-            }
-        }
-        return output.ToString();
+        output.WriteLine("WhereFrom - show where a Windows file came from");
+        output.WriteLine();
+        output.WriteLine("Usage:");
+        output.WriteLine("  wherefrom <file>");
+        output.WriteLine("  wherefrom --help");
+        output.WriteLine("  wherefrom --version");
+        output.WriteLine();
+        output.WriteLine("Diagnostic:");
+        output.WriteLine("  wherefrom debug-zone <file>  Show raw Zone.Identifier metadata");
     }
 }

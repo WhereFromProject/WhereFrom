@@ -75,7 +75,6 @@ public class DebugZoneCommandTests
 
     [Theory]
     [InlineData("debug-zone")]
-    [InlineData("inspect")]
     [InlineData("--json")]
     public void InvalidArgumentsShowUsage(string argument)
     {
