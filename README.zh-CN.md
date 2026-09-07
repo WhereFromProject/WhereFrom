@@ -1,4 +1,4 @@
-[English](README.md) | [简体中文](README.zh-CN.md)
+[ENGLISH](README.md) | 简体中文
 
 # WhereFrom
 
@@ -8,16 +8,18 @@
 
 项目仍处于早期开发，目前提供命令行工具。本地运行，不修改文件，也不解除 Mark of the Web。
 
-## 快速开始
+## 安装
 
-从源码构建需要 **Windows** 和 [.NET 10 SDK](https://learn.microsoft.com/dotnet/core/install/windows)。只有运行时还不够。
-
-下载或克隆仓库后，在根目录打开 PowerShell：
+Windows x64 便携 ZIP 自带 .NET，**无需另行安装 .NET 运行时**。解压 `WhereFrom-0.1.0-win-x64.zip`，在其中的 `WhereFrom-win-x64` 文件夹打开 PowerShell：
 
 ```powershell
-dotnet build
-dotnet run --project src/WhereFrom.Cli -- "C:\Users\YourName\Downloads\example.zip"
+.\wherefrom.exe --version
+.\wherefrom.exe "C:\Users\YourName\Downloads\example.zip"
 ```
+
+可按下方步骤从源码生成发布包。仓库中的说明不代表 GitHub Release 已经公开发布。发布包尚未签名；自带运行时会将原生组件解压到用户临时目录，该目录需要可写。
+
+## 快速开始
 
 将示例路径替换为实际文件。路径含空格时，请保留双引号。
 
@@ -48,12 +50,12 @@ No provenance information found.
 
 ## 命令
 
-构建后，也可以从仓库根目录直接运行：
+在解压后的发布包目录中运行：
 
 ```powershell
-.\src\WhereFrom.Cli\bin\Debug\net10.0-windows\wherefrom.exe "C:\path\to\file.exe"
-.\src\WhereFrom.Cli\bin\Debug\net10.0-windows\wherefrom.exe --help
-.\src\WhereFrom.Cli\bin\Debug\net10.0-windows\wherefrom.exe --version
+.\wherefrom.exe "C:\path\to\file.exe"
+.\wherefrom.exe --help
+.\wherefrom.exe --version
 ```
 
 每次查询一个文件。如果文件名以 `-` 开头或名为 `debug-zone`，请使用完整路径或加上 `.\` 前缀。
@@ -61,7 +63,7 @@ No provenance information found.
 ### 打开来源页面
 
 ```powershell
-.\src\WhereFrom.Cli\bin\Debug\net10.0-windows\wherefrom.exe open "C:\path\to\file.zip"
+.\wherefrom.exe open "C:\path\to\file.zip"
 ```
 
 在默认浏览器中打开记录的 Referrer URL；没有可用的已解析 Referrer 时，使用 Source URL。选中的地址显示在 `Opening:` 后。只允许有效的 HTTP/HTTPS URL；选中地址使用其他协议时会明确拒绝，不回退打开另一个地址。
@@ -73,7 +75,7 @@ No provenance information found.
 ### 扫描目录
 
 ```powershell
-.\src\WhereFrom.Cli\bin\Debug\net10.0-windows\wherefrom.exe scan "$HOME\Downloads"
+.\wherefrom.exe scan "$HOME\Downloads"
 ```
 
 仅扫描第一层，包含隐藏文件和系统文件。每行显示文件名，以及依次优先选择的 Referrer 主机名、Source 主机名或 Windows Zone。合法但不含主机名的 URL 显示为 `URL recorded (no host)`。无可用来源显示 `Unknown`；读取失败显示 `Error`，详情写入标准错误。完整 URL 仍可通过单文件查询查看。
@@ -89,7 +91,7 @@ No provenance information found.
 在文件路径后添加 `--json`，返回一个 JSON 对象：
 
 ```powershell
-$result = .\src\WhereFrom.Cli\bin\Debug\net10.0-windows\wherefrom.exe "C:\path\to\file.exe" --json | ConvertFrom-Json
+$result = .\wherefrom.exe "C:\path\to\file.exe" --json | ConvertFrom-Json
 $code = $LASTEXITCODE
 $result.sourceUrl
 ```
@@ -103,7 +105,7 @@ $result.sourceUrl
 诊断命令用于查看原始文本：
 
 ```powershell
-.\src\WhereFrom.Cli\bin\Debug\net10.0-windows\wherefrom.exe debug-zone "C:\path\to\file.exe"
+.\wherefrom.exe debug-zone "C:\path\to\file.exe"
 ```
 
 它保留字段顺序和 URL，将危险控制字符显示为 `\u0000` 等可见转义。空流与不存在的流会分别提示。
@@ -112,14 +114,14 @@ $result.sourceUrl
 
 报告写入标准输出，错误和元数据问题提示写入标准错误。PowerShell 中可读取 `$LASTEXITCODE`：
 
-| 退出码 | 含义 |
-| --- | --- |
-| 0 | 找到可用来源，或成功显示帮助/版本 |
-| 1 | 查询完成，但没有可用来源 |
-| 2 | 参数或路径不合法，或输入的是目录 |
-| 3 | 文件不存在或权限不足，具体原因见错误提示 |
-| 4 | 读取失败、ADS 不可用、能力查询失败、编码错误或内容超限 |
-| 5 | 未预期的内部错误 |
+| 退出码 | 含义                                                   |
+| ------ | ------------------------------------------------------ |
+| 0      | 找到可用来源，或成功显示帮助/版本                      |
+| 1      | 查询完成，但没有可用来源                               |
+| 2      | 参数或路径不合法，或输入的是目录                       |
+| 3      | 文件不存在或权限不足，具体原因见错误提示               |
+| 4      | 读取失败、ADS 不可用、能力查询失败、编码错误或内容超限 |
+| 5      | 未预期的内部错误                                       |
 
 对 `debug-zone`，0 表示成功读取流（包括空流），1 表示未找到流。
 
@@ -140,6 +142,23 @@ $result.sourceUrl
 - 默认按 UTF-8 解码并检测 BOM，不保证支持所有旧编码或损坏文本。
 - 读取不是原子快照，其他进程可能在查询期间修改文件。
 - 尚不支持 GUI、右键菜单或文件移动追踪。
+
+## 从源码构建
+
+在 Windows 安装 [.NET 10 SDK](https://learn.microsoft.com/dotnet/core/install/windows)，克隆本仓库后在根目录执行：
+
+```powershell
+dotnet build
+dotnet test
+dotnet run --project src/WhereFrom.Cli -- "C:\path\to\file.zip"
+.\scripts\publish.ps1
+```
+
+发布包和 SHA256 校验文件生成在 `artifacts/`。在未安装 .NET 的机器上验收，请参阅[发布验证指南](docs/release-validation.md)。Windows 工作流执行依赖还原、构建、测试、发布及发布包检查。
+
+## 路线图
+
+当前 v0.1 CLI 支持单文件查询、JSON、非递归目录扫描和打开来源页面。浏览器捕获与存储计划留给 v0.2；GUI、资源管理器集成和文件追踪属于更后续的想法。这些未来能力尚未包含，也没有承诺日期。
 
 ## 反馈与贡献
 

@@ -1,4 +1,4 @@
-[English](README.md) | [Simplified Chinese](README.zh-CN.md)
+ENGLISH | [简体中文](README.zh-CN.md)
 
 # WhereFrom
 
@@ -8,16 +8,18 @@ Downloaded a ZIP, installer, or PDF and forgotten where it came from? WhereFrom 
 
 WhereFrom is an early-stage command-line tool. It works locally and does not modify your files or remove Mark of the Web.
 
-## Quick start
+## Installation
 
-To build from source, you need **Windows** and the [.NET 10 SDK](https://learn.microsoft.com/dotnet/core/install/windows). The runtime alone is not enough to build the project.
-
-Download or clone this repository, open PowerShell in its root directory, and run:
+The Windows x64 portable ZIP bundles .NET; **you do not need to install a .NET runtime**. Extract `WhereFrom-0.1.0-win-x64.zip`, open PowerShell in its `WhereFrom-win-x64` folder, and run:
 
 ```powershell
-dotnet build
-dotnet run --project src/WhereFrom.Cli -- "C:\Users\YourName\Downloads\example.zip"
+.\wherefrom.exe --version
+.\wherefrom.exe "C:\Users\YourName\Downloads\example.zip"
 ```
+
+A package can be built from source using the steps below. This repository does not imply that a public GitHub Release has already been published. Packages are unsigned. The bundled runtime extracts native components into the user's temporary directory, which must be writable.
+
+## Quick start
 
 Replace the example path with your file. Keep the quotes if the path contains spaces.
 
@@ -48,12 +50,12 @@ No provenance information found.
 
 ## Commands
 
-After building, you can run the program directly from the repository root:
+From the extracted package directory:
 
 ```powershell
-.\src\WhereFrom.Cli\bin\Debug\net10.0-windows\wherefrom.exe "C:\path\to\file.exe"
-.\src\WhereFrom.Cli\bin\Debug\net10.0-windows\wherefrom.exe --help
-.\src\WhereFrom.Cli\bin\Debug\net10.0-windows\wherefrom.exe --version
+.\wherefrom.exe "C:\path\to\file.exe"
+.\wherefrom.exe --help
+.\wherefrom.exe --version
 ```
 
 Provide one file at a time. For a filename beginning with `-` or named `debug-zone`, use its full path or prefix it with `.\`.
@@ -61,7 +63,7 @@ Provide one file at a time. For a filename beginning with `-` or named `debug-zo
 ### Open a source page
 
 ```powershell
-.\src\WhereFrom.Cli\bin\Debug\net10.0-windows\wherefrom.exe open "C:\path\to\file.zip"
+.\wherefrom.exe open "C:\path\to\file.zip"
 ```
 
 Opens the recorded Referrer URL in your default browser, or the Source URL when no parsed Referrer is available. The selected address is printed after `Opening:`. Only valid HTTP/HTTPS URLs are allowed. If the selected address uses another scheme, the command refuses it without falling back to another URL.
@@ -73,7 +75,7 @@ This command explicitly opens a browser and may contact the recorded website. Fu
 ### Scan a directory
 
 ```powershell
-.\src\WhereFrom.Cli\bin\Debug\net10.0-windows\wherefrom.exe scan "$HOME\Downloads"
+.\wherefrom.exe scan "$HOME\Downloads"
 ```
 
 Scans only the first level, including hidden/system files. Each row shows the filename and the first available Referrer host, Source host, or Windows zone. Valid URLs without a host are labeled `URL recorded (no host)`. Files without usable evidence show `Unknown`; failed reads show `Error`, with details on standard error. Full URLs remain available through single-file queries.
@@ -89,7 +91,7 @@ Scanning is sequential and read-only. `--recursive` and scan `--json` are not su
 Append `--json` after the file path to return one JSON object:
 
 ```powershell
-$result = .\src\WhereFrom.Cli\bin\Debug\net10.0-windows\wherefrom.exe "C:\path\to\file.exe" --json | ConvertFrom-Json
+$result = .\wherefrom.exe "C:\path\to\file.exe" --json | ConvertFrom-Json
 $code = $LASTEXITCODE
 $result.sourceUrl
 ```
@@ -103,7 +105,7 @@ Completed queries return JSON even when no provenance is available (exit code 1)
 The diagnostic command shows the original metadata text:
 
 ```powershell
-.\src\WhereFrom.Cli\bin\Debug\net10.0-windows\wherefrom.exe debug-zone "C:\path\to\file.exe"
+.\wherefrom.exe debug-zone "C:\path\to\file.exe"
 ```
 
 It preserves field order and URLs, while displaying dangerous control characters as visible escapes such as `\u0000`. An empty stream is reported separately from a missing stream.
@@ -112,14 +114,14 @@ It preserves field order and URLs, while displaying dangerous control characters
 
 Reports go to standard output. Errors and metadata warnings go to standard error. In PowerShell, inspect `$LASTEXITCODE`:
 
-| Code | Meaning |
-| --- | --- |
-| 0 | Usable provenance was found, or help/version was displayed |
-| 1 | The query completed but no usable provenance was found |
-| 2 | Invalid arguments, an invalid path, or a directory instead of a file |
-| 3 | File not found or access denied; see the error message |
-| 4 | Read failure, unavailable ADS support, a failed capability query, invalid encoding, or the size limit was exceeded |
-| 5 | An unexpected internal error |
+| Code | Meaning                                                                                                            |
+| ---- | ------------------------------------------------------------------------------------------------------------------ |
+| 0    | Usable provenance was found, or help/version was displayed                                                         |
+| 1    | The query completed but no usable provenance was found                                                             |
+| 2    | Invalid arguments, an invalid path, or a directory instead of a file                                               |
+| 3    | File not found or access denied; see the error message                                                             |
+| 4    | Read failure, unavailable ADS support, a failed capability query, invalid encoding, or the size limit was exceeded |
+| 5    | An unexpected internal error                                                                                       |
 
 For `debug-zone`, code 0 means the stream was read, including an empty stream; code 1 means the stream was not found.
 
@@ -140,6 +142,23 @@ For `debug-zone`, code 0 means the stream was read, including an empty stream; c
 - Text is decoded as UTF-8 by default, with BOM detection. Not all legacy encodings or damaged text are supported.
 - Reads are not atomic snapshots; another process can change the file during inspection.
 - A GUI, Explorer integration, and file-move tracking are not available.
+
+## Build from source
+
+On Windows, install the [.NET 10 SDK](https://learn.microsoft.com/dotnet/core/install/windows), clone this repository, and run from its root:
+
+```powershell
+dotnet build
+dotnet test
+dotnet run --project src/WhereFrom.Cli -- "C:\path\to\file.zip"
+.\scripts\publish.ps1
+```
+
+Publishing creates the portable ZIP and SHA256 checksum under `artifacts/`. See [release validation](docs/release-validation.md) for package checks on a machine without .NET installed. The Windows workflow performs restore, build, test, publish and package smoke checks.
+
+## Roadmap
+
+The current v0.1 CLI supports single-file queries, JSON, non-recursive directory scanning and opening source pages. Browser capture/storage is planned for v0.2; GUI, Explorer integration and file tracking are later ideas. These future capabilities are not included, and dates are not committed.
 
 ## Feedback and contributions
 

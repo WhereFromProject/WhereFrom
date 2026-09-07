@@ -65,6 +65,10 @@ try {
 
 Expect refusal, exit 2, no Notepad/browser action and no fallback to example.com. The fixture itself is created and removed solely for this test.
 
+## User manual acceptance
+
+Confirmed by the user on 2026-09-06: the GitHub ZIP opened its correct GitHub releases page and the Chinese-named PDF opened the correct iLovePDF page, both with exit 0. A local TXT without a URL returned the expected message and exit 1; a nonexistent file returned File not found and exit 3. The user explicitly confirmed actual browser navigation, not only CLI output. Personal paths and private download URLs are omitted.
+
 ## Known limitations and exclusions
 
 - Windows protocol association and browser configuration determine actual handling. Dispatch success does not prove page load, connectivity, or page safety.
