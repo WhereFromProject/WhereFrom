@@ -1,0 +1,170 @@
+<Window
+    x:Class="WhereFrom.App.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Title="WhereFrom">
+
+    <Grid Padding="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- 顶部工具栏 -->
+        <Grid Grid.Row="0" Margin="0,0,0,20">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <TextBlock
+                Grid.Column="0"
+                Text="WhereFrom"
+                Style="{StaticResource TitleTextBlockStyle}"
+                VerticalAlignment="Center"/>
+
+            <Button
+                x:Name="SelectFileButton"
+                Grid.Column="1"
+                Content="选择文件"
+                Click="SelectFileButton_Click"
+                Style="{StaticResource AccentButtonStyle}"/>
+        </Grid>
+
+        <!-- 主内容区域 -->
+        <Grid Grid.Row="1"
+              Background="{ThemeResource LayerFillColorDefaultBrush}"
+              CornerRadius="8"
+              Padding="20"
+              AllowDrop="True"
+              Drop="ContentGrid_Drop"
+              DragOver="ContentGrid_DragOver">
+
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel Spacing="16">
+
+                    <!-- 初始提示 -->
+                    <StackPanel
+                        x:Name="InitialPrompt"
+                        Spacing="12"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Visibility="Visible">
+                        <FontIcon
+                            Glyph="&#xE8E5;"
+                            FontSize="48"
+                            HorizontalAlignment="Center"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                        <TextBlock
+                            Text="拖入一个文件到这里，或点击"选择文件""
+                            TextAlignment="Center"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                    </StackPanel>
+
+                    <!-- 结果显示区域 -->
+                    <StackPanel
+                        x:Name="ResultPanel"
+                        Spacing="16"
+                        Visibility="Collapsed">
+
+                        <!-- 文件信息 -->
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="文件：" Style="{StaticResource BodyStrongTextBlockStyle}"/>
+                            <TextBox
+                                x:Name="FileNameTextBox"
+                                IsReadOnly="True"
+                                TextWrapping="Wrap"/>
+                        </StackPanel>
+
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="路径：" Style="{StaticResource BodyStrongTextBlockStyle}"/>
+                            <TextBox
+                                x:Name="FilePathTextBox"
+                                IsReadOnly="True"
+                                TextWrapping="Wrap"/>
+                        </StackPanel>
+
+                        <!-- 下载地址 -->
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="下载地址：" Style="{StaticResource BodyStrongTextBlockStyle}"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox
+                                    x:Name="SourceUrlTextBox"
+                                    Grid.Column="0"
+                                    IsReadOnly="True"
+                                    TextWrapping="Wrap"
+                                    Margin="0,0,8,0"/>
+                                <Button
+                                    x:Name="CopySourceButton"
+                                    Grid.Column="1"
+                                    Content="复制"
+                                    Click="CopySourceButton_Click"
+                                    IsEnabled="False"/>
+                            </Grid>
+                        </StackPanel>
+
+                        <!-- 引用页面 -->
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="引用页面：" Style="{StaticResource BodyStrongTextBlockStyle}"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox
+                                    x:Name="ReferrerUrlTextBox"
+                                    Grid.Column="0"
+                                    IsReadOnly="True"
+                                    TextWrapping="Wrap"
+                                    Margin="0,0,8,0"/>
+                                <Button
+                                    x:Name="CopyReferrerButton"
+                                    Grid.Column="1"
+                                    Content="复制"
+                                    Click="CopyReferrerButton_Click"
+                                    IsEnabled="False"/>
+                            </Grid>
+                        </StackPanel>
+
+                        <!-- Windows 区域 -->
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="Windows 区域：" Style="{StaticResource BodyStrongTextBlockStyle}"/>
+                            <TextBox
+                                x:Name="ZoneTextBox"
+                                IsReadOnly="True"/>
+                        </StackPanel>
+
+                        <!-- 打开来源网页按钮 -->
+                        <Button
+                            x:Name="OpenSourceButton"
+                            Content="打开来源网页"
+                            Click="OpenSourceButton_Click"
+                            HorizontalAlignment="Left"
+                            IsEnabled="False"/>
+
+                        <!-- 状态信息 -->
+                        <Border
+                            x:Name="StatusBorder"
+                            Background="{ThemeResource SystemFillColorAttentionBackgroundBrush}"
+                            CornerRadius="4"
+                            Padding="12"
+                            Visibility="Collapsed">
+                            <TextBlock
+                                x:Name="StatusTextBlock"
+                                TextWrapping="Wrap"/>
+                        </Border>
+
+                    </StackPanel>
+
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+    </Grid>
+</Window>

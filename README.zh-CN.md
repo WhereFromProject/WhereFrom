@@ -10,12 +10,27 @@
 
 ## 安装
 
+WhereFrom 提供两种形式：
+
+### 命令行工具 (CLI)
+
 Windows x64 便携 ZIP 自带 .NET，**无需另行安装 .NET 运行时**。解压 `WhereFrom-0.1.0-win-x64.zip`，在其中的 `WhereFrom-win-x64` 文件夹打开 PowerShell：
 
 ```powershell
 .\wherefrom.exe --version
 .\wherefrom.exe "C:\Users\YourName\Downloads\example.zip"
 ```
+
+### 图形界面 (GUI)
+
+解压 `WhereFrom-GUI-0.1.0-win-x64.zip` 并运行 `WhereFrom.App.exe`。无需安装。图形界面提供：
+
+- 拖放文件检查
+- 可视化显示来源地址、引用页面和 Windows 区域
+- 一键复制到剪贴板
+- 在默认浏览器中打开来源页面
+
+**系统要求**：Windows 10 版本 1809 或更高，x64 架构。打包版本包含所有必需的 .NET 和 Windows App SDK 组件。
 
 可按下方步骤从源码生成发布包。仓库中的说明不代表 GitHub Release 已经公开发布。发布包尚未签名；自带运行时会将原生组件解压到用户临时目录，该目录需要可写。
 
@@ -141,7 +156,7 @@ $result.sourceUrl
 - 单次最多读取 64 KiB，超限报错，不静默截断。
 - 默认按 UTF-8 解码并检测 BOM，不保证支持所有旧编码或损坏文本。
 - 读取不是原子快照，其他进程可能在查询期间修改文件。
-- 尚不支持 GUI、右键菜单或文件移动追踪。
+- 尚不支持 Explorer 右键菜单或文件移动追踪。
 
 ## 从源码构建
 
@@ -158,7 +173,9 @@ dotnet run --project src/WhereFrom.Cli -- "C:\path\to\file.zip"
 
 ## 路线图
 
-当前 v0.1 CLI 支持单文件查询、JSON、非递归目录扫描和打开来源页面。浏览器捕获与存储计划留给 v0.2；GUI、资源管理器集成和文件追踪属于更后续的想法。这些未来能力尚未包含，也没有承诺日期。
+**v0.1 已完成**：CLI 支持单文件查询、JSON、非递归目录扫描和打开来源页面。提供最小化图形界面，支持拖放文件检查。
+
+**计划中**：浏览器捕获/存储（v0.2）、资源管理器集成和文件追踪是后续想法。这些功能尚未包含，也未承诺日期。
 
 ## 反馈与贡献
 

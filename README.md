@@ -10,12 +10,27 @@ WhereFrom is an early-stage command-line tool. It works locally and does not mod
 
 ## Installation
 
+WhereFrom is available in two forms:
+
+### Command-line tool (CLI)
+
 The Windows x64 portable ZIP bundles .NET; **you do not need to install a .NET runtime**. Extract `WhereFrom-0.1.0-win-x64.zip`, open PowerShell in its `WhereFrom-win-x64` folder, and run:
 
 ```powershell
 .\wherefrom.exe --version
 .\wherefrom.exe "C:\Users\YourName\Downloads\example.zip"
 ```
+
+### Graphical interface (GUI)
+
+Extract `WhereFrom-GUI-0.1.0-win-x64.zip` and run `WhereFrom.App.exe`. No installation required. The GUI provides:
+
+- Drag-and-drop file inspection
+- Visual display of source URLs, referrer pages, and Windows zones
+- One-click copy to clipboard
+- Open source page in your default browser
+
+**Requirements**: Windows 10 version 1809 or later, x64 architecture. The packaged version includes all necessary .NET and Windows App SDK components.
 
 A package can be built from source using the steps below. This repository does not imply that a public GitHub Release has already been published. Packages are unsigned. The bundled runtime extracts native components into the user's temporary directory, which must be writable.
 
@@ -158,7 +173,9 @@ Publishing creates the portable ZIP and SHA256 checksum under `artifacts/`. See 
 
 ## Roadmap
 
-The current v0.1 CLI supports single-file queries, JSON, non-recursive directory scanning and opening source pages. Browser capture/storage is planned for v0.2; GUI, Explorer integration and file tracking are later ideas. These future capabilities are not included, and dates are not committed.
+**v0.1 Complete**: CLI supports single-file queries, JSON, non-recursive directory scanning and opening source pages. A minimal GUI is available for drag-and-drop file inspection.
+
+**Planned**: Browser capture/storage (v0.2), Explorer integration and file tracking are later ideas. These future capabilities are not included, and dates are not committed.
 
 ## Feedback and contributions
 
