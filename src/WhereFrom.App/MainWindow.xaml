@@ -59,7 +59,7 @@
                             HorizontalAlignment="Center"
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                         <TextBlock
-                            Text="拖入一个文件到这里，或点击"选择文件""
+                            Text="拖入一个文件到这里，或点击&quot;选择文件&quot;"
                             TextAlignment="Center"
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                     </StackPanel>

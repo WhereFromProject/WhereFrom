@@ -233,7 +233,8 @@ public sealed partial class MainWindow : Window
                 string warnings = "部分字段存在问题：\n";
                 foreach (var issue in result.Issues)
                 {
-                    warnings += $"• {issue.Field}: {issue.Message}\n";
+                    string message = GetIssueMessage(issue.Kind);
+                    warnings += $"• {GetFieldName(issue.Field)}: {message}\n";
                 }
                 ShowStatus(warnings.TrimEnd(), isError: false);
             }
@@ -298,6 +299,31 @@ public sealed partial class MainWindow : Window
         {
             ShowStatus($"无法启动浏览器：{ex.Message}", isError: true);
         }
+    }
+
+    private string GetFieldName(ProvenanceField field)
+    {
+        return field switch
+        {
+            ProvenanceField.Metadata => "元数据",
+            ProvenanceField.Zone => "区域标识",
+            ProvenanceField.SourceUrl => "下载地址",
+            ProvenanceField.ReferrerUrl => "引用页面",
+            _ => field.ToString()
+        };
+    }
+
+    private string GetIssueMessage(ProvenanceIssueKind kind)
+    {
+        return kind switch
+        {
+            ProvenanceIssueKind.EmptyValue => "值为空",
+            ProvenanceIssueKind.InvalidValue => "值无效",
+            ProvenanceIssueKind.DuplicateField => "字段重复",
+            ProvenanceIssueKind.InvalidFormat => "格式无效",
+            ProvenanceIssueKind.MissingSection => "缺少节",
+            _ => kind.ToString()
+        };
     }
 
     private void ShowStatus(string message, bool isError)

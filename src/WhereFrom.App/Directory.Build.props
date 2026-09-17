@@ -1,0 +1,8 @@
+<Project>
+  <PropertyGroup>
+    <!-- 禁用 PRI 资源索引生成 - .NET 10 与 Windows App SDK 1.5 不兼容 -->
+    <DisableXbfGeneration>true</DisableXbfGeneration>
+    <UseMrtResourceIndexer>false</UseMrtResourceIndexer>
+    <EnableMsixTooling>false</EnableMsixTooling>
+  </PropertyGroup>
+</Project>

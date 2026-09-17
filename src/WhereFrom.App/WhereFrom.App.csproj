@@ -5,9 +5,16 @@
     <TargetPlatformMinVersion>10.0.19041.0</TargetPlatformMinVersion>
     <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
     <UseWinUI>true</UseWinUI>
+    <WindowsPackageType>None</WindowsPackageType>
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+    <DefineConstants>$(DefineConstants);DISABLE_XAML_GENERATED_MAIN</DefineConstants>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <Platforms>x64;ARM64</Platforms>
     <PublishProfile>win-$(Platform).pubxml</PublishProfile>
+    <!-- 禁用 PRI 资源索引 - .NET 10 与 Windows App SDK 1.5 的 MrtCore 工具不兼容 -->
+    <EnableCoreMrtTooling>false</EnableCoreMrtTooling>
+    <EnableMsixTooling>false</EnableMsixTooling>
+    <AppxPackage>false</AppxPackage>
   </PropertyGroup>
 
   <ItemGroup>
@@ -23,4 +30,7 @@
     <ProjectReference Include="..\WhereFrom.Core\WhereFrom.Core.csproj" />
     <ProjectReference Include="..\WhereFrom.Platform.Windows\WhereFrom.Platform.Windows.csproj" />
   </ItemGroup>
+
+  <!-- 强制跳过 ExpandPriContent 目标 -->
+  <Target Name="ExpandPriContent" />
 </Project>
