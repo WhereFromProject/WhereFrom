@@ -10,12 +10,27 @@ WhereFrom is an early-stage command-line tool. It works locally and does not mod
 
 ## Installation
 
+WhereFrom is available in two forms:
+
+### Command-line tool (CLI)
+
 The Windows x64 portable ZIP bundles .NET; **you do not need to install a .NET runtime**. Extract `WhereFrom-0.1.0-win-x64.zip`, open PowerShell in its `WhereFrom-win-x64` folder, and run:
 
 ```powershell
 .\wherefrom.exe --version
 .\wherefrom.exe "C:\Users\YourName\Downloads\example.zip"
 ```
+
+### Graphical interface (GUI)
+
+Extract the entire `WhereFrom-GUI-0.1.0-win-x64.zip`, open `WhereFrom-GUI-win-x64`, and run `WhereFrom.App.exe`. Keep the DLLs and resource files beside the executable; do not copy the EXE alone. The GUI provides:
+
+- Drag-and-drop file inspection
+- Visual display of source URLs, referrer pages, and Windows zones
+- One-click copy to clipboard
+- Open source page in your default browser
+
+**Requirements**: Windows 10 version 1809 or later, x64 architecture. The packaged version includes all necessary .NET and Windows App SDK components.
 
 A package can be built from source using the steps below. This repository does not imply that a public GitHub Release has already been published. Packages are unsigned. The bundled runtime extracts native components into the user's temporary directory, which must be writable.
 
@@ -141,7 +156,7 @@ For `debug-zone`, code 0 means the stream was read, including an empty stream; c
 - Metadata reads are limited to 64 KiB. Oversized data produces an error, not silent truncation.
 - Text is decoded as UTF-8 by default, with BOM detection. Not all legacy encodings or damaged text are supported.
 - Reads are not atomic snapshots; another process can change the file during inspection.
-- A GUI, Explorer integration, and file-move tracking are not available.
+- Explorer integration and file-move tracking are not available.
 
 ## Build from source
 
@@ -152,13 +167,18 @@ dotnet build
 dotnet test
 dotnet run --project src/WhereFrom.Cli -- "C:\path\to\file.zip"
 .\scripts\publish.ps1
+.\scripts\publish-gui.ps1
 ```
 
 Publishing creates the portable ZIP and SHA256 checksum under `artifacts/`. See [release validation](docs/release-validation.md) for package checks on a machine without .NET installed. The Windows workflow performs restore, build, test, publish and package smoke checks.
 
 ## Roadmap
 
-The current v0.1 CLI supports single-file queries, JSON, non-recursive directory scanning and opening source pages. Browser capture/storage is planned for v0.2; GUI, Explorer integration and file tracking are later ideas. These future capabilities are not included, and dates are not committed.
+Pushes to `main` and `dev`, pull requests, and manual workflow runs build the solution and upload separate CLI and GUI packages. The GUI ZIP is extracted and checked for window startup and clean shutdown. See [GUI startup validation](docs/gui-startup-validation.md) for the resource configuration and local verification steps.
+
+**v0.1 Complete**: CLI supports single-file queries, JSON, non-recursive directory scanning and opening source pages. A minimal GUI is available for drag-and-drop file inspection.
+
+**Planned**: Browser capture/storage (v0.2), Explorer integration and file tracking are later ideas. These future capabilities are not included, and dates are not committed.
 
 ## Feedback and contributions
 

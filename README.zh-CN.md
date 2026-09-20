@@ -10,12 +10,27 @@
 
 ## 安装
 
+WhereFrom 提供两种形式：
+
+### 命令行工具 (CLI)
+
 Windows x64 便携 ZIP 自带 .NET，**无需另行安装 .NET 运行时**。解压 `WhereFrom-0.1.0-win-x64.zip`，在其中的 `WhereFrom-win-x64` 文件夹打开 PowerShell：
 
 ```powershell
 .\wherefrom.exe --version
 .\wherefrom.exe "C:\Users\YourName\Downloads\example.zip"
 ```
+
+### 图形界面 (GUI)
+
+完整解压 `WhereFrom-GUI-0.1.0-win-x64.zip`，进入 `WhereFrom-GUI-win-x64` 文件夹运行 `WhereFrom.App.exe`。请保留旁边的 DLL 和资源文件，不要单独复制 EXE。图形界面提供：
+
+- 拖放文件检查
+- 可视化显示来源地址、引用页面和 Windows 区域
+- 一键复制到剪贴板
+- 在默认浏览器中打开来源页面
+
+**系统要求**：Windows 10 版本 1809 或更高，x64 架构。打包版本包含所有必需的 .NET 和 Windows App SDK 组件。
 
 可按下方步骤从源码生成发布包。仓库中的说明不代表 GitHub Release 已经公开发布。发布包尚未签名；自带运行时会将原生组件解压到用户临时目录，该目录需要可写。
 
@@ -141,7 +156,7 @@ $result.sourceUrl
 - 单次最多读取 64 KiB，超限报错，不静默截断。
 - 默认按 UTF-8 解码并检测 BOM，不保证支持所有旧编码或损坏文本。
 - 读取不是原子快照，其他进程可能在查询期间修改文件。
-- 尚不支持 GUI、右键菜单或文件移动追踪。
+- 尚不支持 Explorer 右键菜单或文件移动追踪。
 
 ## 从源码构建
 
@@ -152,13 +167,18 @@ dotnet build
 dotnet test
 dotnet run --project src/WhereFrom.Cli -- "C:\path\to\file.zip"
 .\scripts\publish.ps1
+.\scripts\publish-gui.ps1
 ```
 
 发布包和 SHA256 校验文件生成在 `artifacts/`。在未安装 .NET 的机器上验收，请参阅[发布验证指南](docs/release-validation.md)。Windows 工作流执行依赖还原、构建、测试、发布及发布包检查。
 
 ## 路线图
 
-当前 v0.1 CLI 支持单文件查询、JSON、非递归目录扫描和打开来源页面。浏览器捕获与存储计划留给 v0.2；GUI、资源管理器集成和文件追踪属于更后续的想法。这些未来能力尚未包含，也没有承诺日期。
+推送到 `main`、`dev`，创建 PR 或手动运行工作流时，会自动构建并上传独立的 CLI 和 GUI 包。GUI ZIP 会解压后验证窗口启动和正常关闭。资源配置与本地验证说明见 [GUI 启动验证](docs/gui-startup-validation.md)。
+
+**v0.1 已完成**：CLI 支持单文件查询、JSON、非递归目录扫描和打开来源页面。提供最小化图形界面，支持拖放文件检查。
+
+**计划中**：浏览器捕获/存储（v0.2）、资源管理器集成和文件追踪是后续想法。这些功能尚未包含，也未承诺日期。
 
 ## 反馈与贡献
 

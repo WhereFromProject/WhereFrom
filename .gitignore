@@ -6,3 +6,10 @@
 *.suo
 MILESTONE v0.1.md
 artifacts/
+
+# 工程规划和实施文档（内部使用，不提交）
+docs/gui-mvp-plan.md
+docs/gui-mvp-validation.md
+docs/gui-mvp-implementation-summary.md
+docs/gui-mvp-final-report.md
+docs/gui-build-troubleshooting.md

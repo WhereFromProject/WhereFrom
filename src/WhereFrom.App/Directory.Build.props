@@ -1,0 +1,7 @@
+<Project>
+  <Import Project="../../Directory.Build.props" />
+  <PropertyGroup>
+    <!-- Resource tooling must be enabled before NuGet .props are imported. -->
+    <EnableMsixTooling>true</EnableMsixTooling>
+  </PropertyGroup>
+</Project>
