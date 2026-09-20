@@ -2,7 +2,7 @@ name: Windows build and release checks
 
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
   pull_request:
   workflow_dispatch:
 
@@ -25,11 +25,11 @@ jobs:
         with:
           dotnet-version: '10.0.x'
       - name: Restore
-        run: dotnet restore
+        run: dotnet restore -p:Platform=x64
       - name: Build
-        run: dotnet build -c Release --no-restore
+        run: dotnet build -c Release -p:Platform=x64 --no-restore
       - name: Test
-        run: dotnet test -c Release --no-build --logger trx
+        run: dotnet test -c Release -p:Platform=x64 --no-build --logger trx
       - name: Publish and package
         run: ./scripts/publish.ps1
       - name: Verify the packaged executable
@@ -51,3 +51,17 @@ jobs:
           name: test-results
           path: tests/**/TestResults/*.trx
           if-no-files-found: ignore
+      - name: Publish GUI
+        run: ./scripts/publish-gui.ps1
+      - name: Verify GUI package startup
+        run: |
+          Expand-Archive -LiteralPath artifacts/WhereFrom-GUI-0.1.0-win-x64.zip -DestinationPath artifacts/verify-gui
+          ./scripts/smoke-test-gui.ps1 -Executable ./artifacts/verify-gui/WhereFrom-GUI-win-x64/WhereFrom.App.exe
+      - name: Upload GUI package
+        uses: actions/upload-artifact@v4
+        with:
+          name: WhereFrom-GUI-win-x64
+          path: |
+            artifacts/WhereFrom-GUI-0.1.0-win-x64.zip
+            artifacts/WhereFrom-GUI-SHA256SUMS.txt
+          if-no-files-found: error

@@ -23,7 +23,7 @@ Windows x64 便携 ZIP 自带 .NET，**无需另行安装 .NET 运行时**。解
 
 ### 图形界面 (GUI)
 
-解压 `WhereFrom-GUI-0.1.0-win-x64.zip` 并运行 `WhereFrom.App.exe`。无需安装。图形界面提供：
+完整解压 `WhereFrom-GUI-0.1.0-win-x64.zip`，进入 `WhereFrom-GUI-win-x64` 文件夹运行 `WhereFrom.App.exe`。请保留旁边的 DLL 和资源文件，不要单独复制 EXE。图形界面提供：
 
 - 拖放文件检查
 - 可视化显示来源地址、引用页面和 Windows 区域
@@ -167,11 +167,14 @@ dotnet build
 dotnet test
 dotnet run --project src/WhereFrom.Cli -- "C:\path\to\file.zip"
 .\scripts\publish.ps1
+.\scripts\publish-gui.ps1
 ```
 
 发布包和 SHA256 校验文件生成在 `artifacts/`。在未安装 .NET 的机器上验收，请参阅[发布验证指南](docs/release-validation.md)。Windows 工作流执行依赖还原、构建、测试、发布及发布包检查。
 
 ## 路线图
+
+推送到 `main`、`dev`，创建 PR 或手动运行工作流时，会自动构建并上传独立的 CLI 和 GUI 包。GUI ZIP 会解压后验证窗口启动和正常关闭。资源配置与本地验证说明见 [GUI 启动验证](docs/gui-startup-validation.md)。
 
 **v0.1 已完成**：CLI 支持单文件查询、JSON、非递归目录扫描和打开来源页面。提供最小化图形界面，支持拖放文件检查。
 

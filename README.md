@@ -23,7 +23,7 @@ The Windows x64 portable ZIP bundles .NET; **you do not need to install a .NET r
 
 ### Graphical interface (GUI)
 
-Extract `WhereFrom-GUI-0.1.0-win-x64.zip` and run `WhereFrom.App.exe`. No installation required. The GUI provides:
+Extract the entire `WhereFrom-GUI-0.1.0-win-x64.zip`, open `WhereFrom-GUI-win-x64`, and run `WhereFrom.App.exe`. Keep the DLLs and resource files beside the executable; do not copy the EXE alone. The GUI provides:
 
 - Drag-and-drop file inspection
 - Visual display of source URLs, referrer pages, and Windows zones
@@ -156,7 +156,7 @@ For `debug-zone`, code 0 means the stream was read, including an empty stream; c
 - Metadata reads are limited to 64 KiB. Oversized data produces an error, not silent truncation.
 - Text is decoded as UTF-8 by default, with BOM detection. Not all legacy encodings or damaged text are supported.
 - Reads are not atomic snapshots; another process can change the file during inspection.
-- A GUI, Explorer integration, and file-move tracking are not available.
+- Explorer integration and file-move tracking are not available.
 
 ## Build from source
 
@@ -167,11 +167,14 @@ dotnet build
 dotnet test
 dotnet run --project src/WhereFrom.Cli -- "C:\path\to\file.zip"
 .\scripts\publish.ps1
+.\scripts\publish-gui.ps1
 ```
 
 Publishing creates the portable ZIP and SHA256 checksum under `artifacts/`. See [release validation](docs/release-validation.md) for package checks on a machine without .NET installed. The Windows workflow performs restore, build, test, publish and package smoke checks.
 
 ## Roadmap
+
+Pushes to `main` and `dev`, pull requests, and manual workflow runs build the solution and upload separate CLI and GUI packages. The GUI ZIP is extracted and checked for window startup and clean shutdown. See [GUI startup validation](docs/gui-startup-validation.md) for the resource configuration and local verification steps.
 
 **v0.1 Complete**: CLI supports single-file queries, JSON, non-recursive directory scanning and opening source pages. A minimal GUI is available for drag-and-drop file inspection.
 

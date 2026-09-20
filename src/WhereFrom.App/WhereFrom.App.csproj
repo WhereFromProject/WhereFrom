@@ -11,9 +11,6 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <Platforms>x64;ARM64</Platforms>
     <PublishProfile>win-$(Platform).pubxml</PublishProfile>
-    <!-- 禁用 PRI 资源索引 - .NET 10 与 Windows App SDK 1.5 的 MrtCore 工具不兼容 -->
-    <EnableCoreMrtTooling>false</EnableCoreMrtTooling>
-    <EnableMsixTooling>false</EnableMsixTooling>
     <AppxPackage>false</AppxPackage>
   </PropertyGroup>
 
@@ -22,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.5.240311000" />
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.260804001" />
     <Manifest Include="$(ApplicationManifest)" />
   </ItemGroup>
 
@@ -31,6 +28,4 @@
     <ProjectReference Include="..\WhereFrom.Platform.Windows\WhereFrom.Platform.Windows.csproj" />
   </ItemGroup>
 
-  <!-- 强制跳过 ExpandPriContent 目标 -->
-  <Target Name="ExpandPriContent" />
 </Project>
