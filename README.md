@@ -10,7 +10,7 @@ WhereFrom is an early-stage command-line tool. It works locally and does not mod
 
 ## Installation
 
-**Recommended: run `WhereFrom-0.1.0-win-x64-Setup.exe`.** On first installation, choose a folder or keep the default `%LOCALAPPDATA%\Programs\WhereFrom`. The installer adds the selected folder to your user PATH and requires no administrator privileges or separate .NET installation. Choose a folder your Windows account can write to; paths containing semicolons are not supported.
+**Recommended: run `WhereFrom-0.1.1-win-x64-Setup.exe`.** On first installation, choose a folder or keep the default `%LOCALAPPDATA%\Programs\WhereFrom`. The installer adds the selected folder to your user PATH and requires no administrator privileges or separate .NET installation. Choose a folder your Windows account can write to; paths containing semicolons are not supported.
 
 Reinstalling uses the existing installation folder. To change its location, uninstall WhereFrom first, then run setup again and select the new folder.
 
@@ -20,7 +20,7 @@ Uninstall **WhereFrom** through Windows Settings → Apps → Installed apps. Th
 
 ### Portable ZIP
 
-The Windows x64 portable ZIP bundles .NET; **you do not need to install a .NET runtime**. Extract `WhereFrom-0.1.0-win-x64.zip`, open PowerShell in its `WhereFrom-win-x64` folder, and run:
+The Windows x64 portable ZIP bundles .NET; **you do not need to install a .NET runtime**. Extract `WhereFrom-0.1.1-win-x64.zip`, open PowerShell in its `WhereFrom-win-x64` folder, and run:
 
 ```powershell
 .\wherefrom.exe --version

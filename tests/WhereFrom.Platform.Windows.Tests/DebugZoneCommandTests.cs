@@ -93,7 +93,7 @@ public class DebugZoneCommandTests
         using var error = new StringWriter();
 
         Assert.Equal(0, CommandLine.Run(["--version"], output, error));
-        Assert.Equal("WhereFrom 0.1.0" + Environment.NewLine, output.ToString());
+        Assert.Equal("WhereFrom 0.1.1" + Environment.NewLine, output.ToString());
         Assert.Equal("", error.ToString());
     }
 }

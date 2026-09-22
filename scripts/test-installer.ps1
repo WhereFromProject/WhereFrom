@@ -2,7 +2,7 @@ param([Parameter(Mandatory = $true)][string]$Compiler)
 $ErrorActionPreference = 'Stop'
 $repo = Split-Path -Parent $PSScriptRoot
 $work = Join-Path $repo ('artifacts/installer-test-' + [guid]::NewGuid().ToString('N'))
-Expand-Archive -LiteralPath (Join-Path $repo 'artifacts/WhereFrom-0.1.0-win-x64.zip') -DestinationPath $work
+Expand-Archive -LiteralPath (Join-Path $repo 'artifacts/WhereFrom-0.1.1-win-x64.zip') -DestinationPath $work
 $package = Join-Path $work 'WhereFrom-win-x64'
 & $Compiler "/DInstallerTest" "/DPackageDir=$package" "/DOutputDir=$work" (Join-Path $repo 'installer/WhereFrom.iss')
 if ($LASTEXITCODE -ne 0) { throw 'Test installer compilation failed.' }
@@ -53,7 +53,7 @@ try {
             try {
                 $version = $child.StandardOutput.ReadToEnd().Trim()
                 $child.WaitForExit()
-                if ($child.ExitCode -ne 0 -or $version -ne 'WhereFrom 0.1.0') { throw 'Bare command resolution from another directory failed.' }
+                if ($child.ExitCode -ne 0 -or $version -ne 'WhereFrom 0.1.1') { throw 'Bare command resolution from another directory failed.' }
             } finally { $child.Dispose() }
             [IO.File]::WriteAllText((Join-Path $install 'keep-user-file.txt'), 'preserve me')
             $key.SetValue('Path', $expected + ';C:\LaterAddition', $kind)

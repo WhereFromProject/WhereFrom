@@ -34,7 +34,7 @@ jobs:
         run: ./scripts/publish.ps1
       - name: Verify the packaged executable
         run: |
-          Expand-Archive -LiteralPath artifacts/WhereFrom-0.1.0-win-x64.zip -DestinationPath artifacts/verify
+          Expand-Archive -LiteralPath artifacts/WhereFrom-0.1.1-win-x64.zip -DestinationPath artifacts/verify
           ./scripts/smoke-test.ps1 -Executable ./artifacts/verify/WhereFrom-win-x64/wherefrom.exe
       - name: Prepare installer compiler
         run: |
@@ -54,8 +54,8 @@ jobs:
         with:
           name: WhereFrom-win-x64
           path: |
-            artifacts/WhereFrom-0.1.0-win-x64.zip
-            artifacts/WhereFrom-0.1.0-win-x64-Setup.exe
+            artifacts/WhereFrom-0.1.1-win-x64.zip
+            artifacts/WhereFrom-0.1.1-win-x64-Setup.exe
             artifacts/SHA256SUMS.txt
           if-no-files-found: error
       - name: Upload test results

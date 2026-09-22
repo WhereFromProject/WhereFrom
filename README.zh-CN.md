@@ -10,7 +10,7 @@
 
 ## 安装
 
-**推荐运行 `WhereFrom-0.1.0-win-x64-Setup.exe`。** 首次安装时可自行选择目录，或保留默认的 `%LOCALAPPDATA%\Programs\WhereFrom`。安装器将所选目录加入用户 PATH，无需管理员权限，也无需另装 .NET。请选择当前 Windows 账号有写入权限的目录；路径不支持包含分号。
+**推荐运行 `WhereFrom-0.1.1-win-x64-Setup.exe`。** 首次安装时可自行选择目录，或保留默认的 `%LOCALAPPDATA%\Programs\WhereFrom`。安装器将所选目录加入用户 PATH，无需管理员权限，也无需另装 .NET。请选择当前 Windows 账号有写入权限的目录；路径不支持包含分号。
 
 重复安装会沿用原安装目录。如需更换位置，请先卸载 WhereFrom，再运行安装器选择新目录。
 
@@ -20,7 +20,7 @@
 
 ### 便携 ZIP
 
-Windows x64 便携 ZIP 自带 .NET，**无需另行安装 .NET 运行时**。解压 `WhereFrom-0.1.0-win-x64.zip`，在其中的 `WhereFrom-win-x64` 文件夹打开 PowerShell：
+Windows x64 便携 ZIP 自带 .NET，**无需另行安装 .NET 运行时**。解压 `WhereFrom-0.1.1-win-x64.zip`，在其中的 `WhereFrom-win-x64` 文件夹打开 PowerShell：
 
 ```powershell
 .\wherefrom.exe --version

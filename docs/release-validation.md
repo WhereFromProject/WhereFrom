@@ -4,8 +4,8 @@ This guide applies to the portable ZIP produced by `scripts/publish.ps1`. Use Wi
 
 ## Prepare the package
 
-1. On the development machine, run `./scripts/publish.ps1` from PowerShell in the repository. It creates `artifacts/WhereFrom-0.1.0-win-x64.zip` and `artifacts/SHA256SUMS.txt`.
-2. Copy the ZIP and checksum into the clean machine. Compare `Get-FileHash .\WhereFrom-0.1.0-win-x64.zip -Algorithm SHA256` with SHA256SUMS.txt.
+1. On the development machine, run `./scripts/publish.ps1` from PowerShell in the repository. It creates `artifacts/WhereFrom-0.1.1-win-x64.zip` and `artifacts/SHA256SUMS.txt`.
+2. Copy the ZIP and checksum into the clean machine. Compare `Get-FileHash .\WhereFrom-0.1.1-win-x64.zip -Algorithm SHA256` with SHA256SUMS.txt.
 3. Extract the ZIP to a local writable NTFS directory, for example `C:\WhereFromTest`. Open PowerShell in the extracted `WhereFrom-win-x64` directory. No PATH change, installer or administrator privileges are required.
 4. Record Windows version/architecture and whether .NET was installed before the test. Running on a development machine with DOTNET_ROOT changed is not a substitute for this check.
 5. The EXE is unsigned. Record any SmartScreen or application-control block; do not remove MotW or change security settings as part of this verification.
@@ -34,7 +34,7 @@ First confirm startup:
 .\wherefrom.exe --help
 ```
 
-Expect WhereFrom 0.1.0 and the single-file, JSON, scan, open and diagnostic commands.
+Expect WhereFrom 0.1.1 and the single-file, JSON, scan, open and diagnostic commands.
 
 Download a benign ZIP/PDF directly with the clean machine's browser. Using an existing executable as evidence is also valid: WhereFrom reads its metadata and never executes that file. Choose a path with Chinese characters if possible:
 

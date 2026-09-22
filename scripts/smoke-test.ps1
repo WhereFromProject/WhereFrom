@@ -54,7 +54,7 @@ try {
     $ads = [Convert]::ToBase64String([byte[]](Get-ZoneBytes))
 
     $version = Invoke-WhereFrom -CliArgs @('--version') -ExpectedCode 0
-    if ($version.Output -ne 'WhereFrom 0.1.0' -or $version.Error) { throw 'Version mismatch.' }
+    if ($version.Output -ne 'WhereFrom 0.1.1' -or $version.Error) { throw 'Version mismatch.' }
     $help = Invoke-WhereFrom -CliArgs @('--help') -ExpectedCode 0
     foreach ($command in @('wherefrom <file>', 'wherefrom scan <directory>', 'wherefrom open <file>', '--json')) {
         if (-not $help.Output.Contains($command)) { throw "Missing help: $command" }

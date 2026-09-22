@@ -13,13 +13,13 @@
   #define Identity "WhereFrom"
   #define EnvironmentKey "Environment"
   #define StateKey "Software\WhereFrom\Installer"
-  #define SetupName "WhereFrom-0.1.0-win-x64-Setup"
+  #define SetupName "WhereFrom-0.1.1-win-x64-Setup"
 #endif
 
 [Setup]
 AppId={#Identity}
 AppName=WhereFrom
-AppVersion=0.1.0
+AppVersion=0.1.1
 AppPublisher=WhereFrom
 AppPublisherURL=https://github.com/strategist0/WhereFrom
 DefaultDirName={localappdata}\Programs\WhereFrom

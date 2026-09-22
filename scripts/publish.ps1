@@ -32,7 +32,7 @@ Copy-Item -Path (Join-Path $repo 'docs/*.md') -Destination $docs
 Copy-Item -LiteralPath (Join-Path $repo 'ENGINEERING.md') -Destination $package
 Copy-Item -LiteralPath (Join-Path $repo 'scripts/smoke-test.ps1') -Destination $package
 
-$zip = Join-Path $artifacts 'WhereFrom-0.1.0-win-x64.zip'
+$zip = Join-Path $artifacts 'WhereFrom-0.1.1-win-x64.zip'
 Compress-Archive -LiteralPath $package -DestinationPath $zip -Force
 $hash = (Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash.ToLowerInvariant()
 [IO.File]::WriteAllText((Join-Path $artifacts 'SHA256SUMS.txt'),
