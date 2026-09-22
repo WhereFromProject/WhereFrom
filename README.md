@@ -10,6 +10,16 @@ WhereFrom is an early-stage command-line tool. It works locally and does not mod
 
 ## Installation
 
+**Recommended: run `WhereFrom-0.1.0-win-x64-Setup.exe`.** On first installation, choose a folder or keep the default `%LOCALAPPDATA%\Programs\WhereFrom`. The installer adds the selected folder to your user PATH and requires no administrator privileges or separate .NET installation. Choose a folder your Windows account can write to; paths containing semicolons are not supported.
+
+Reinstalling uses the existing installation folder. To change its location, uninstall WhereFrom first, then run setup again and select the new folder.
+
+Close all terminal windows and open a new terminal after installation. You can then run `wherefrom --version` or `wherefrom "C:\path\to\file.zip"` from any directory. If a terminal host still has the old environment, restart that host or sign out and back in.
+
+Uninstall **WhereFrom** through Windows Settings → Apps → Installed apps. The uninstaller removes its own PATH entry while preserving other entries. Reinstalling does not duplicate the entry. An equivalent entry that existed before installation is left untouched.
+
+### Portable ZIP
+
 The Windows x64 portable ZIP bundles .NET; **you do not need to install a .NET runtime**. Extract `WhereFrom-0.1.0-win-x64.zip`, open PowerShell in its `WhereFrom-win-x64` folder, and run:
 
 ```powershell
@@ -153,6 +163,8 @@ dotnet test
 dotnet run --project src/WhereFrom.Cli -- "C:\path\to\file.zip"
 .\scripts\publish.ps1
 ```
+
+To also build the installer, install [Inno Setup 6](https://jrsoftware.org/isdl.php) and run `./scripts/build-installer.ps1` after publishing. A custom compiler path can be supplied with `-Compiler`.
 
 Publishing creates the portable ZIP and SHA256 checksum under `artifacts/`. See [release validation](docs/release-validation.md) for package checks on a machine without .NET installed. The Windows workflow performs restore, build, test, publish and package smoke checks.
 

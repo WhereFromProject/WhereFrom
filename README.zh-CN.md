@@ -10,6 +10,16 @@
 
 ## 安装
 
+**推荐运行 `WhereFrom-0.1.0-win-x64-Setup.exe`。** 首次安装时可自行选择目录，或保留默认的 `%LOCALAPPDATA%\Programs\WhereFrom`。安装器将所选目录加入用户 PATH，无需管理员权限，也无需另装 .NET。请选择当前 Windows 账号有写入权限的目录；路径不支持包含分号。
+
+重复安装会沿用原安装目录。如需更换位置，请先卸载 WhereFrom，再运行安装器选择新目录。
+
+安装后关闭所有终端窗口，再打开新终端，即可在任意目录运行 `wherefrom --version` 或 `wherefrom "C:\path\to\file.zip"`。若终端宿主仍保留旧环境，请重启宿主程序，或注销后重新登录。
+
+可通过 Windows 设置 → 应用 → 已安装的应用卸载 **WhereFrom**。卸载仅移除安装器添加的 PATH 条目，保留其他条目；重复安装不会重复添加。安装前已经存在的等价条目不会被接管或删除。
+
+### 便携 ZIP
+
 Windows x64 便携 ZIP 自带 .NET，**无需另行安装 .NET 运行时**。解压 `WhereFrom-0.1.0-win-x64.zip`，在其中的 `WhereFrom-win-x64` 文件夹打开 PowerShell：
 
 ```powershell
@@ -153,6 +163,8 @@ dotnet test
 dotnet run --project src/WhereFrom.Cli -- "C:\path\to\file.zip"
 .\scripts\publish.ps1
 ```
+
+若要同时生成安装器，请安装 [Inno Setup 6](https://jrsoftware.org/isdl.php)，发布后运行 `./scripts/build-installer.ps1`，也可通过 `-Compiler` 指定编译器路径。
 
 发布包和 SHA256 校验文件生成在 `artifacts/`。在未安装 .NET 的机器上验收，请参阅[发布验证指南](docs/release-validation.md)。Windows 工作流执行依赖还原、构建、测试、发布及发布包检查。
 

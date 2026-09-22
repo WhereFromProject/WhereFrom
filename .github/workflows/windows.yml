@@ -36,12 +36,26 @@ jobs:
         run: |
           Expand-Archive -LiteralPath artifacts/WhereFrom-0.1.0-win-x64.zip -DestinationPath artifacts/verify
           ./scripts/smoke-test.ps1 -Executable ./artifacts/verify/WhereFrom-win-x64/wherefrom.exe
+      - name: Prepare installer compiler
+        run: |
+          $download = Join-Path $env:RUNNER_TEMP 'innosetup.exe'
+          Invoke-WebRequest 'https://github.com/jrsoftware/issrc/releases/download/is-6_7_3/innosetup-6.7.3.exe' -OutFile $download
+          $signature = Get-AuthenticodeSignature $download
+          if ($signature.Status -ne 'Valid' -or $signature.SignerCertificate.Subject -notlike '*Pyrsys B.V.*') { throw 'Compiler signature mismatch.' }
+          $target = Join-Path $env:RUNNER_TEMP 'InnoSetup'
+          $process = Start-Process $download -ArgumentList @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/CURRENTUSER', '/NOICONS', ('/DIR="' + $target + '"')) -WindowStyle Hidden -Wait -PassThru
+          if ($process.ExitCode -ne 0) { throw 'Compiler setup failed.' }
+      - name: Build installer
+        run: ./scripts/build-installer.ps1 -Compiler "$env:RUNNER_TEMP/InnoSetup/ISCC.exe"
+      - name: Test installer with isolated PATH registry keys
+        run: ./scripts/test-installer.ps1 -Compiler "$env:RUNNER_TEMP/InnoSetup/ISCC.exe"
       - name: Upload package
         uses: actions/upload-artifact@v4
         with:
           name: WhereFrom-win-x64
           path: |
             artifacts/WhereFrom-0.1.0-win-x64.zip
+            artifacts/WhereFrom-0.1.0-win-x64-Setup.exe
             artifacts/SHA256SUMS.txt
           if-no-files-found: error
       - name: Upload test results
