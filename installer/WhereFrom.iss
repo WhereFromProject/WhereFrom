@@ -1,6 +1,9 @@
 #ifndef PackageDir
   #error PackageDir is required
 #endif
+#ifndef ExtensionId
+  #error ExtensionId is required
+#endif
 #ifndef OutputDir
   #define OutputDir "..\artifacts"
 #endif
@@ -9,11 +12,17 @@
   #define EnvironmentKey "Software\WhereFrom\InstallerTest\Environment"
   #define StateKey "Software\WhereFrom\InstallerTest\State"
   #define SetupName "WhereFrom-InstallerTest"
+  #define ChromeHostKey "Software\WhereFrom\InstallerTest\ChromeNativeMessagingHosts\org.wherefrom.provenance"
+  #define EdgeHostKey "Software\WhereFrom\InstallerTest\EdgeNativeMessagingHosts\org.wherefrom.provenance"
+  #define ExplorerKey "Software\WhereFrom\InstallerTest\Classes\*\shell\WhereFrom"
 #else
   #define Identity "WhereFrom"
   #define EnvironmentKey "Environment"
   #define StateKey "Software\WhereFrom\Installer"
-  #define SetupName "WhereFrom-0.1.1-win-x64-Setup"
+  #define SetupName "WhereFrom-preview-win-x64-Setup"
+  #define ChromeHostKey "Software\Google\Chrome\NativeMessagingHosts\org.wherefrom.provenance"
+  #define EdgeHostKey "Software\Microsoft\Edge\NativeMessagingHosts\org.wherefrom.provenance"
+  #define ExplorerKey "Software\Classes\*\shell\WhereFrom"
 #endif
 
 [Setup]
@@ -21,7 +30,7 @@ AppId={#Identity}
 AppName=WhereFrom
 AppVersion=0.1.1
 AppPublisher=WhereFrom
-AppPublisherURL=https://github.com/strategist0/WhereFrom
+AppPublisherURL=https://github.com/opsorart/WhereFrom
 DefaultDirName={localappdata}\Programs\WhereFrom
 DisableDirPage=auto
 UsePreviousAppDir=yes
@@ -35,13 +44,20 @@ Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
 ChangesEnvironment=yes
-UninstallDisplayIcon={app}\wherefrom.exe
+UninstallDisplayIcon={app}\GUI\WhereFrom.App.exe
 LicenseFile={#PackageDir}\LICENSE
 CloseApplications=yes
 RestartApplications=no
 
 [Files]
 Source: "{#PackageDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+
+[Icons]
+Name: "{autoprograms}\WhereFrom"; Filename: "{app}\GUI\WhereFrom.App.exe"
+Name: "{autoprograms}\WhereFrom browser setup"; Filename: "{app}\BROWSER-SETUP.txt"
+
+[Run]
+Filename: "{sys}\notepad.exe"; Parameters: """{app}\BROWSER-SETUP.txt"""; Description: "View browser setup instructions"; Flags: postinstall skipifsilent nowait
 
 [Messages]
 FinishedLabel=WhereFrom is installed. Close all terminal windows and open a new terminal, then run wherefrom --version from any directory.
@@ -50,6 +66,7 @@ FinishedLabel=WhereFrom is installed. Close all terminal windows and open a new 
 const
   EnvKey = '{#EnvironmentKey}';
   StateKey = '{#StateKey}';
+  ExplorerKey = '{#ExplorerKey}';
 
 function RegOpenKeyEx(hKey: Integer; SubKey: String; Options, Access: LongWord; var Handle: Integer): Integer;
   external 'RegOpenKeyExW@advapi32.dll stdcall';
@@ -144,6 +161,116 @@ begin
   end;
 end;
 
+function HostKey(Browser: String): String;
+begin
+  if Browser = 'chrome' then Result := '{#ChromeHostKey}'
+  else Result := '{#EdgeHostKey}';
+end;
+
+function HostManifestPath(Browser: String): String;
+begin
+  Result := ExpandConstant('{app}\NativeHost\native-host-' + Browser + '.json');
+end;
+
+function HostManifest: String;
+var HostExe: String;
+begin
+  HostExe := ExpandConstant('{app}\NativeHost\WhereFrom.NativeHost.exe');
+  StringChangeEx(HostExe, '\', '\\', True);
+  Result := '{"name":"org.wherefrom.provenance","description":"WhereFrom browser download provenance",' +
+    '"path":"' + HostExe + '","type":"stdio",' +
+    '"allowed_origins":["chrome-extension://{#ExtensionId}/"]}';
+end;
+
+procedure RegisterHost(Browser: String);
+var Key, ManifestPath, Existing, BackupName: String;
+begin
+  Key := HostKey(Browser);
+  ManifestPath := HostManifestPath(Browser);
+  BackupName := 'Previous' + Browser + 'Host';
+  if not FileExists(ExpandConstant('{app}\NativeHost\WhereFrom.NativeHost.exe')) then
+    RaiseException('Native Host executable is missing.');
+  if RegQueryStringValue(HKCU, Key, '', Existing) and
+     (Normalized(Existing) <> Normalized(ManifestPath)) and
+     not RegValueExists(HKCU, StateKey, BackupName) then
+    if not RegWriteStringValue(HKCU, StateKey, BackupName, Existing) then
+      RaiseException('Unable to preserve the previous Native Host registration.');
+  if not SaveStringToFile(ManifestPath, Utf8Encode(HostManifest), False) then
+    RaiseException('Unable to write the Native Host manifest.');
+  if not RegWriteStringValue(HKCU, Key, '', ManifestPath) then
+    RaiseException('Unable to register the Native Host.');
+end;
+
+procedure UnregisterHost(Browser: String);
+var Key, ManifestPath, Registered, Previous, BackupName: String;
+    Contents: AnsiString;
+begin
+  Key := HostKey(Browser);
+  ManifestPath := HostManifestPath(Browser);
+  BackupName := 'Previous' + Browser + 'Host';
+  if RegQueryStringValue(HKCU, Key, '', Registered) and
+     (Normalized(Registered) = Normalized(ManifestPath)) then begin
+    if RegQueryStringValue(HKCU, StateKey, BackupName, Previous) then begin
+      if not RegWriteStringValue(HKCU, Key, '', Previous) then
+        RaiseException('Unable to restore the previous Native Host registration.');
+    end else begin
+      RegDeleteValue(HKCU, Key, '');
+      RegDeleteKeyIfEmpty(HKCU, Key);
+    end;
+  end;
+  RegDeleteValue(HKCU, StateKey, BackupName);
+  if LoadStringFromFile(ManifestPath, Contents) and
+     (Contents = Utf8Encode(HostManifest)) then
+    DeleteFile(ManifestPath);
+end;
+
+function ExplorerCommand: String;
+begin
+  Result := '"' + ExpandConstant('{app}\GUI\WhereFrom.App.exe') + '" "%1"';
+end;
+
+procedure RegisterExplorer;
+var Command, Existing, Owned: String;
+begin
+  Command := ExplorerCommand;
+  { Do not take over an existing user-defined menu. }
+  if RegKeyExists(HKCU, ExplorerKey) then begin
+    if not RegQueryStringValue(HKCU, StateKey, 'ExplorerCommand', Owned) or
+       not RegQueryStringValue(HKCU, ExplorerKey + '\command', '', Existing) or
+       (Existing <> Owned) then Exit;
+  end;
+  if not FileExists(ExpandConstant('{app}\GUI\WhereFrom.App.exe')) then
+    RaiseException('GUI executable is missing.');
+  if not RegWriteStringValue(HKCU, StateKey, 'ExplorerCommand', Command) or
+     not RegWriteStringValue(HKCU, ExplorerKey, '', '查看文件来源 (WhereFrom)') or
+     not RegWriteStringValue(HKCU, ExplorerKey, 'Icon',
+       ExpandConstant('{app}\GUI\WhereFrom.App.exe')) or
+     not RegWriteStringValue(HKCU, ExplorerKey, 'MultiSelectModel', 'Single') or
+     not RegWriteStringValue(HKCU, ExplorerKey + '\command', '', Command) then
+    RaiseException('Unable to register the Explorer menu.');
+end;
+
+procedure UnregisterExplorer;
+var Owned, Existing: String;
+begin
+  if not RegQueryStringValue(HKCU, StateKey, 'ExplorerCommand', Owned) then Exit;
+  if RegQueryStringValue(HKCU, ExplorerKey + '\command', '', Existing) and
+     (Existing = Owned) then begin
+    RegDeleteValue(HKCU, ExplorerKey + '\command', '');
+    RegDeleteKeyIfEmpty(HKCU, ExplorerKey + '\command');
+    if RegQueryStringValue(HKCU, ExplorerKey, '', Existing) and
+       (Existing = '查看文件来源 (WhereFrom)') then
+      RegDeleteValue(HKCU, ExplorerKey, '');
+    if RegQueryStringValue(HKCU, ExplorerKey, 'Icon', Existing) and
+       (Existing = ExpandConstant('{app}\GUI\WhereFrom.App.exe')) then
+      RegDeleteValue(HKCU, ExplorerKey, 'Icon');
+    if RegQueryStringValue(HKCU, ExplorerKey, 'MultiSelectModel', Existing) and
+       (Existing = 'Single') then
+      RegDeleteValue(HKCU, ExplorerKey, 'MultiSelectModel');
+    RegDeleteKeyIfEmpty(HKCU, ExplorerKey);
+  end;
+  RegDeleteValue(HKCU, StateKey, 'ExplorerCommand');
+end;
 procedure CurStepChanged(Step: TSetupStep);
 var Value, Entry: String; Kind: LongWord;
 begin
@@ -162,12 +289,18 @@ begin
     else Value := Value + ';' + Entry;
     WritePath(Value, Kind);
   end;
+  RegisterHost('chrome');
+  RegisterHost('edge');
+  RegisterExplorer;
 end;
 
 procedure CurUninstallStepChanged(Step: TUninstallStep);
 var Value, Entry: String; Kind: LongWord;
 begin
   if Step <> usUninstall then Exit;
+  UnregisterHost('chrome');
+  UnregisterHost('edge');
+  UnregisterExplorer;
   if RegQueryStringValue(HKCU, StateKey, 'AddedPath', Entry) then begin
     Kind := PathKind;
     if RegValueExists(HKCU, EnvKey, 'Path') then begin

@@ -1,5 +1,6 @@
 using WhereFrom.Core;
 using WhereFrom.Platform.Windows;
+using WhereFrom.Storage;
 
 namespace WhereFrom.Cli;
 
@@ -10,7 +11,8 @@ internal static class CommandLine
         TextWriter output,
         TextWriter error,
         IProvenanceProvider? provider = null,
-        Action<System.Diagnostics.ProcessStartInfo>? launch = null)
+        Action<System.Diagnostics.ProcessStartInfo>? launch = null,
+        DownloadStore? downloadStore = null)
     {
         if (args.Length == 1 && args[0] == "--version")
         {
@@ -25,11 +27,49 @@ internal static class CommandLine
             return 0;
         }
 
+        if (args.Length >= 1 && args[0] == "data")
+        {
+            if (args.Length == 2 && args[1] == "path")
+            {
+                output.WriteLine(DownloadStore.DefaultPath);
+                return 0;
+            }
+            if (args.Length == 3 && args[1] == "clear" && args[2] == "--yes")
+            {
+                try
+                {
+                    output.WriteLine($"Deleted {new DownloadStore(DownloadStore.DefaultPath).Clear()} download records.");
+                    return 0;
+                }
+                catch (Exception exception) when (exception is IOException or UnauthorizedAccessException
+                    or Microsoft.Data.Sqlite.SqliteException)
+                {
+                    error.WriteLine("Unable to clear local download records.");
+                    return 4;
+                }
+            }
+            error.WriteLine("Usage: wherefrom data path | data clear --yes");
+            return 2;
+        }
+
         if (args.Length == 2 && args[0] == "debug-zone")
         {
             return RunDebugZone(args[1], output, error);
         }
 
+        if (args.Length >= 1 && args[0] == "audit")
+        {
+            var valid = (args.Length == 2 || args.Length == 4
+                && args[2] == "--limit" && int.TryParse(args[3], out _))
+                && args[1].Length > 0 && !args[1].StartsWith('-');
+            if (!valid)
+            {
+                error.WriteLine("Usage: wherefrom audit <directory> [--limit 1..1000]");
+                return 2;
+            }
+            var limit = args.Length == 4 ? int.Parse(args[3]) : 100;
+            return AuditCommand.Run(args[1], limit, output, error, provider, downloadStore);
+        }
         if (args.Length >= 2 && args[0] == "scan" && args[1] != "--json")
         {
             if (args.Length != 2 || args[1].StartsWith('-'))
@@ -47,7 +87,7 @@ internal static class CommandLine
                 error.WriteLine("Usage: wherefrom open <file>");
                 return 2;
             }
-            return OpenCommand.Run(args[1], output, error, provider, launch);
+            return OpenCommand.Run(args[1], output, error, provider, launch, downloadStore);
         }
 
         var json = args.Length == 2 && args[1] == "--json";
@@ -60,12 +100,15 @@ internal static class CommandLine
 
         try
         {
-            var result = (provider ?? new WindowsZoneProvider()).Inspect(args[0]);
-            // Reuse the existing diagnostics and exit codes without changing text mode.
-            var exitCode = ProvenanceFormatter.Write(result, json ? TextWriter.Null : output, error);
+            var windows = provider ?? new WindowsZoneProvider();
+            var report = provider is not null && downloadStore is null
+                ? new ProvenanceReport(windows.Inspect(args[0]), [], 0, null)
+                : new UnifiedProvenanceQuery(windows, downloadStore ?? new DownloadStore(DownloadStore.DefaultPath))
+                    .Inspect(args[0]);
+            var exitCode = ProvenanceFormatter.Write(report, json ? TextWriter.Null : output, error);
             if (json && exitCode is 0 or 1)
             {
-                output.WriteLine(ProvenanceJson.Serialize(result));
+                output.WriteLine(ProvenanceJson.Serialize(report));
             }
             return exitCode;
         }
@@ -121,9 +164,12 @@ internal static class CommandLine
         output.WriteLine("  wherefrom <file>");
         output.WriteLine("  wherefrom <file> --json");
         output.WriteLine("  wherefrom scan <directory>");
+        output.WriteLine("  wherefrom audit <directory> [--limit 1..1000]");
         output.WriteLine("  wherefrom open <file>");
         output.WriteLine("  wherefrom --help");
         output.WriteLine("  wherefrom --version");
+        output.WriteLine("  wherefrom data path");
+        output.WriteLine("  wherefrom data clear --yes");
         output.WriteLine();
         output.WriteLine("Diagnostic:");
         output.WriteLine("  wherefrom debug-zone <file>  Show raw Zone.Identifier metadata");

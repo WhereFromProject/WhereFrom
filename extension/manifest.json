@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "WhereFrom Download Capture",
+  "version": "0.1.0",
+  "description": "Save local provenance for new Chrome and Edge downloads.",
+  "permissions": [
+    "downloads",
+    "nativeMessaging",
+    "storage"
+  ],
+  "background": {
+    "service_worker": "worker.js"
+  },
+  "action": {
+    "default_title": "WhereFrom capture status",
+    "default_popup": "popup.html"
+  },
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxgJA6xWeVvQS9OB9UW6E9v0o2xYEI4s4wOVwnYjs4wZtgR9QvDIPLr16PER4jtKofM6y5hnDPBiTuaZe41wNRQgY5h0Dxh6ca2tnZyVSNxQw1Sx6ZjQOVoIsfIGaRoa7MNIIzQz4zczfE4rLHasDY8JW+JWOh7zFE5h0NRmAlUJHnljsKK3FDzkmyXy7wqpAAxtzV1dDi5g8IiAPdN2UpPQaRDSH3Fv38MTWZlfXMNFd68Ve0S+zumZ5FVJQrBx2NUIM8NIGSPHwgdWOI83oSttL9OokIVNOf8lANzC87I8tymedmEc698hikzWq4ycgcD2VVKDEZLdQdlXkWBEUmQIDAQAB"
+}

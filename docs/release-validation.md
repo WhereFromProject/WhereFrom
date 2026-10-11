@@ -1,83 +1,38 @@
-# Validate the Windows x64 release
+# Windows x64 release validation
 
-This guide applies to the portable ZIP produced by `scripts/publish.ps1`. Use Windows 11 x64 on NTFS, in Windows Sandbox or another Windows machine without a .NET SDK/runtime installed. The package includes the runtime; installing .NET is not required.
+This is a repeatable release checklist for the current source-built preview. It is not a record of a completed release. Keep test transcripts, personal paths, download URLs, and browser profiles outside Git.
 
-## Prepare the package
+## Build and inspect
 
-1. On the development machine, run `./scripts/publish.ps1` from PowerShell in the repository. It creates `artifacts/WhereFrom-0.1.1-win-x64.zip` and `artifacts/SHA256SUMS.txt`.
-2. Copy the ZIP and checksum into the clean machine. Compare `Get-FileHash .\WhereFrom-0.1.1-win-x64.zip -Algorithm SHA256` with SHA256SUMS.txt.
-3. Extract the ZIP to a local writable NTFS directory, for example `C:\WhereFromTest`. Open PowerShell in the extracted `WhereFrom-win-x64` directory. No PATH change, installer or administrator privileges are required.
-4. Record Windows version/architecture and whether .NET was installed before the test. Running on a development machine with DOTNET_ROOT changed is not a substitute for this check.
-5. The EXE is unsigned. Record any SmartScreen or application-control block; do not remove MotW or change security settings as part of this verification.
-
-Single-file .NET deployment extracts native runtime files under the user's temporary directory. The runtime needs that directory to be writable. This does not change the inspected files or their metadata.
-
-## Automated package smoke check
-
-The included script supports Windows PowerShell 5.1 and PowerShell 7:
+Run on Windows x64 with .NET 10 SDK, Node.js, and Inno Setup 6 available:
 
 ```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\smoke-test.ps1 -Executable .\wherefrom.exe
-$LASTEXITCODE
+dotnet restore WhereFrom.sln
+dotnet test WhereFrom.sln -c Release -p:Platform=x64
+node --test extension/test/*.test.js
+./scripts/publish.ps1
+./scripts/build-installer.ps1
 ```
 
-The execution-policy setting applies only to that PowerShell process; it does not unblock or modify any file. The script creates and deletes only its own temporary NTFS fixtures. It checks version/help, human-readable output, JSON/ConvertFrom-Json, Unicode paths, no metadata, non-recursive scanning, errors, rejected open schemes, and byte-for-byte file/ADS preservation. Expected final result: PASS and exit 0. It never opens a browser.
+The outputs are `artifacts/WhereFrom-preview-win-x64.zip`, `artifacts/WhereFrom-preview-win-x64-Setup.exe`, and `artifacts/SHA256SUMS.txt`. Compare both SHA-256 values with `Get-FileHash`. Inspect the ZIP before release: it should contain the CLI, GUI, Native Host, browser extension, license and notices, two READMEs, browser setup guide, and portable Host registration scripts. It must not contain build directories, test results, local SQLite databases, internal milestone journals, credentials, or personal files.
 
-Run this check with networking disconnected to verify local functionality. You do not need to uninstall software or alter firewall rules; use a clean machine or Sandbox configuration appropriate to your environment.
-
-## Manual command check
-
-First confirm startup:
+Run the packaged CLI smoke test and the isolated installer tests:
 
 ```powershell
-.\wherefrom.exe --version
-.\wherefrom.exe --help
+Expand-Archive -LiteralPath artifacts/WhereFrom-preview-win-x64.zip -DestinationPath artifacts/verify
+./scripts/smoke-test.ps1 -Executable ./artifacts/verify/WhereFrom-win-x64/wherefrom.exe
+./scripts/test-installer.ps1 -Compiler "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+./scripts/test-upgrade-installer.ps1 -Compiler "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
 ```
 
-Expect WhereFrom 0.1.1 and the single-file, JSON, scan, open and diagnostic commands.
+The installer tests use their own registry namespace. They do not replace the normal installation or delete the user's provenance database.
 
-Download a benign ZIP/PDF directly with the clean machine's browser. Using an existing executable as evidence is also valid: WhereFrom reads its metadata and never executes that file. Choose a path with Chinese characters if possible:
+## Clean-machine acceptance
 
-```powershell
-$file = "$HOME\Downloads\downloaded.zip"
-.\wherefrom.exe $file
-$LASTEXITCODE
-$result = .\wherefrom.exe $file --json | ConvertFrom-Json
-$code = $LASTEXITCODE
-$result
-$code
-.\wherefrom.exe scan "$HOME\Downloads"
-$LASTEXITCODE
-.\wherefrom.exe open $file
-$LASTEXITCODE
-```
+Use a clean Windows x64 account or Windows Sandbox without a .NET SDK. Verify the portable ZIP and installer separately. For the portable ZIP, follow `BROWSER-SETUP.txt` to register the Native Host. For the installer, confirm the CLI is available from a new terminal, the GUI launches, and the Explorer menu opens the selected file. Confirm the extension can connect to the Host in Edge and Chrome after loading it in Developer mode.
 
-Expected:
-- Text and JSON agree on the available zone/source/referrer. JSON schemaVersion is 1; absent values are null.
-- Scan includes first-level files only; counts reconcile. No read errors means exit 0 even when all sources are unknown.
-- Open prints and opens Referrer, or Source if no parsed Referrer exists. Only HTTP/HTTPS is allowed. Confirm the actual page in the browser, not just exit 0.
-- Open requires a configured default browser and connectivity to reach a website; a URL endpoint may redirect or download a file.
+For each browser, download a new small file, query it through CLI and GUI, and check that Windows and browser evidence remain separate. Copy the file to another path and check that the browser record is labeled a possible association. Check an unknown local file, a Zone-only file, a failed or canceled download, and an incognito download. Restart the browser and repeat one completed download. `open` must navigate only after the user explicitly requests it.
 
-A copied/downloaded ZIP may lose evidence through transport or extraction. If the chosen evidence file has no URLs, open should return 1. To test browser dispatch without relying on browser metadata, create a fresh fixture:
+Uninstall the app. Confirm its PATH and Native Host registrations and Explorer menu are removed while `%LOCALAPPDATA%\WhereFrom\wherefrom.db` remains. Browser extensions loaded in Developer mode must be removed manually from each browser. Validate an in-place upgrade from the published v0.1.1 CLI installer separately.
 
-```powershell
-$fixture = Join-Path $env:TEMP ("wherefrom-page-" + [guid]::NewGuid() + ".txt")
-try {
-    Set-Content -LiteralPath $fixture -Value "Temporary validation file"
-    Set-Content -LiteralPath $fixture -Stream Zone.Identifier -Value "[ZoneTransfer]`nZoneId=3`nHostUrl=https://example.com/file`nReferrerUrl=https://example.com/"
-    .\wherefrom.exe open $fixture
-    $LASTEXITCODE
-} finally {
-    Remove-Item -LiteralPath $fixture
-}
-```
-
-Expect the example.com page and exit 0. These are synthetic test values, not browser observations. Never add or edit ADS on existing personal/downloaded files for testing.
-
-Also check a local TXT without ADS (query exit 1), nonexistent path (exit 3), a directory passed as a file (exit 2), and existing symlink/junction entries if available. Report access errors separately from missing provenance.
-
-## Record acceptance
-
-Record package SHA256, Windows version, .NET installation state, shell version, each command's output/exit code, actual browser destination, and any security or runtime-extraction block. Redact private URLs/tokens and personal filenames before sharing results.
-
-Clean-environment validation and the first GitHub Actions run remain pending until actual results are supplied. The workflow builds/tests/publishes and validates the extracted ZIP; it uploads workflow artifacts but does not create a GitHub Release.
+Record pass/fail results outside the source tree and redact private URLs, tokens, filenames, and Windows account paths before sharing them. Do not mark a platform or browser as validated without a real run. The preview is unsigned; record any SmartScreen or application-control block rather than changing system policy during verification.

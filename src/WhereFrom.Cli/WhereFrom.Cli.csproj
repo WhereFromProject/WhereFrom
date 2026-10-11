@@ -7,6 +7,7 @@
   <ItemGroup>
     <ProjectReference Include="..\WhereFrom.Core\WhereFrom.Core.csproj" />
     <ProjectReference Include="..\WhereFrom.Platform.Windows\WhereFrom.Platform.Windows.csproj" />
+    <ProjectReference Include="..\WhereFrom.Storage\WhereFrom.Storage.csproj" />
     <InternalsVisibleTo Include="WhereFrom.Platform.Windows.Tests" />
   </ItemGroup>
 </Project>

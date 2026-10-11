@@ -1,0 +1,21 @@
+WhereFrom 浏览器扩展安装说明（Chrome / Edge）
+
+安装器已为当前 Windows 用户注册 Native Host，但浏览器扩展仍需手动加载：
+
+1. 打开 Chrome 的 chrome://extensions 或 Edge 的 edge://extensions。
+2. 开启“开发者模式”，点击“加载已解压的扩展程序”。
+3. 选择 WhereFrom 安装目录中的 extension 文件夹，不要选择它的上级目录。
+4. 扩展 ID 应为 ggdgeholjgmlijgfpnmdggbofkofjhlp。若不同，请使用当前安装包附带的 extension 文件夹重新加载。
+5. 重启浏览器，下载一个新文件。点击扩展图标可查看最近一次捕获结果；在 WhereFrom 窗口中选择或拖入该文件可查询来源。
+
+扩展只记录此后的新下载，不导入旧历史，也不记录无痕下载。网址保存前会去除查询参数和片段。查询数据保存在 %LOCALAPPDATA%\WhereFrom\wherefrom.db；卸载程序不会删除它。需要清除时，运行 wherefrom data clear --yes。
+
+卸载前可在 chrome://extensions 和 edge://extensions 中手动移除 WhereFrom 扩展。卸载器会清除自身的 Native Host 注册，但浏览器不会自动移除通过开发者模式加载的扩展条目。
+
+便携包：解压后先加载包内 extension 文件夹，再在 PowerShell 中运行：
+  .\register-native-host.ps1 -HostExe .\NativeHost\WhereFrom.NativeHost.exe -ChromeExtensionId ggdgeholjgmlijgfpnmdggbofkofjhlp -EdgeExtensionId ggdgeholjgmlijgfpnmdggbofkofjhlp
+仅使用一种浏览器时可省略另一种浏览器的 ID。移除便携包前运行 .\unregister-native-host.ps1。
+
+Browser extension setup (Chrome / Edge)
+
+The installer registers the Native Host for the current Windows user. To load the extension, open chrome://extensions or edge://extensions, enable Developer mode, choose Load unpacked, and select the extension folder inside the WhereFrom installation directory. Its ID should be ggdgeholjgmlijgfpnmdggbofkofjhlp. Restart the browser and download a new file. Incognito downloads and old history are excluded. Remove the developer-mode extension manually from each browser before uninstalling; the uninstaller removes its Native Host registration but preserves the local database.

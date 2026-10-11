@@ -67,3 +67,4 @@ Windows-specific behavior belongs in Windows-specific projects, such as:
 
 ```text
 WhereFrom.Platform.Windows
+```

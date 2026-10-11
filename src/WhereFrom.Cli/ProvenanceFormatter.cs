@@ -4,6 +4,68 @@ namespace WhereFrom.Cli;
 
 internal static class ProvenanceFormatter
 {
+    public static int Write(ProvenanceReport report, TextWriter output, TextWriter error)
+    {
+        var windows = report.Windows;
+        if (report.BrowserDownloads.Count == 0 && report.PossibleBrowserDownloads.Count == 0)
+        {
+            var code = Write(windows, output, error);
+            if (windows.HasProvenance && code == 0)
+                output.WriteLine("Evidence: Windows Zone.Identifier");
+            if (report.HistoricalBrowserRecords > 0)
+                output.WriteLine("Historical browser records at this path were excluded because the file changed.");
+            if (report.BrowserError is not null)
+            {
+                error.WriteLine("Browser records unavailable.");
+                return code == 1 ? 4 : code;
+            }
+            return code;
+        }
+
+        output.WriteLine(TerminalText.EscapeControls(Path.GetFileName(windows.Path), preserveWhitespace: false));
+        output.WriteLine();
+        if (windows.SourceUrl is not null)
+            WriteSection(output, "Windows source (Zone.Identifier; may contain private URL parameters)", windows.SourceUrl);
+        if (windows.ReferrerUrl is not null)
+            WriteSection(output, "Windows referrer", windows.ReferrerUrl);
+        if (windows.Zone is not null)
+            WriteSection(output, "Windows Zone", windows.Zone.Name is null
+                ? windows.Zone.Id.ToString() : $"{windows.Zone.Name} ({windows.Zone.Id})");
+        foreach (var download in report.BrowserDownloads)
+        {
+            output.WriteLine(download.MatchBasis == "sha256"
+                ? $"{download.Browser} download (path, size, time and SHA-256 match; content may be a copy)"
+                : $"{download.Browser} download (only path, size and time match; content unverified)");
+            if ((download.FinalUrl ?? download.InitialUrl) is { } source)
+                output.WriteLine($"  Source: {TerminalText.EscapeControls(source, preserveWhitespace: false)}");
+            if (download.ReferrerUrl is not null)
+                output.WriteLine($"  Referrer: {TerminalText.EscapeControls(download.ReferrerUrl, preserveWhitespace: false)}");
+            output.WriteLine();
+        }
+        foreach (var download in report.PossibleBrowserDownloads)
+        {
+            output.WriteLine(download.MatchBasis == "sha256"
+                ? $"Possible {download.Browser} download association (same SHA-256 content; may be a move or copy)"
+                : $"Possible {download.Browser} download association (only path, size and time match; content unverified)");
+            output.WriteLine($"  Previously recorded path: {TerminalText.EscapeControls(download.Path, preserveWhitespace: false)}");
+            if ((download.FinalUrl ?? download.InitialUrl) is { } source)
+                output.WriteLine($"  Possible source: {TerminalText.EscapeControls(source, preserveWhitespace: false)}");
+            if (download.ReferrerUrl is not null)
+                output.WriteLine($"  Possible referrer: {TerminalText.EscapeControls(download.ReferrerUrl, preserveWhitespace: false)}");
+            output.WriteLine();
+        }
+        if (report.HasConflict)
+            output.WriteLine("Windows and browser source URLs differ; both are shown without choosing one.");
+        if (report.HistoricalBrowserRecords > 0)
+            output.WriteLine("Historical browser records at this path were excluded because the file changed.");
+        if (windows.Status is ProvenanceReadStatus.ReadFailed or ProvenanceReadStatus.AccessDenied)
+            error.WriteLine("Windows provenance metadata could not be read.");
+        if (report.BrowserError is not null)
+            error.WriteLine("Browser records unavailable.");
+        WriteIssues(windows, error);
+        return 0;
+    }
+
     public static int Write(ProvenanceResult result, TextWriter output, TextWriter error)
     {
         switch (result.Status)

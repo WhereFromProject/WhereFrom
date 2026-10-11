@@ -2,23 +2,29 @@ using System.ComponentModel;
 using System.Diagnostics;
 using WhereFrom.Core;
 using WhereFrom.Platform.Windows;
+using WhereFrom.Storage;
 
 namespace WhereFrom.Cli;
 
 internal static class OpenCommand
 {
     public static int Run(string path, TextWriter output, TextWriter error,
-        IProvenanceProvider? provider = null, Action<ProcessStartInfo>? launch = null)
+        IProvenanceProvider? provider = null, Action<ProcessStartInfo>? launch = null,
+        DownloadStore? downloadStore = null)
     {
         try
         {
-            var result = (provider ?? new WindowsZoneProvider()).Inspect(path);
-            var code = ProvenanceFormatter.Write(result, TextWriter.Null, error);
+            var windows = provider ?? new WindowsZoneProvider();
+            var report = provider is not null && downloadStore is null
+                ? new ProvenanceReport(windows.Inspect(path), [], 0, null)
+                : new UnifiedProvenanceQuery(windows, downloadStore ?? new DownloadStore(DownloadStore.DefaultPath))
+                    .Inspect(path);
+            var code = ProvenanceFormatter.Write(report, TextWriter.Null, error);
             if (code is not (0 or 1))
             {
                 return code;
             }
-            var url = result.ReferrerUrl ?? result.SourceUrl;
+            var url = report.ReferrerUrl ?? report.SourceUrl;
             if (url is null)
             {
                 output.WriteLine("No source URL is available for this file.");
