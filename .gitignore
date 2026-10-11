@@ -1,8 +1,65 @@
+# .NET and IDE output
 **/bin/
 **/obj/
 **/TestResults/
 .vs/
+.idea/
 *.user
 *.suo
-MILESTONE v0.1.md
+
+# Local build, packaging, and diagnostic output
 artifacts/
+/out/
+/publish/
+/coverage/
+*.trx
+*.coverage
+*.coveragexml
+*.lcov
+*.log
+*.tmp
+*.temp
+*.bak
+*.orig
+*.rej
+*.nupkg
+*.exe
+*.dll
+*.pdb
+*.zip
+*.7z
+*.msi
+*.msix
+*.cache
+*.dmp
+Thumbs.db
+.DS_Store
+
+# Local provenance databases and SQLite sidecars
+*.db
+*.db-*
+*.sqlite
+*.sqlite-*
+*.sqlite3
+*.sqlite3-*
+
+# Local configuration and signing material
+.env
+.env.*
+!.env.example
+*.pfx
+*.p12
+*.pem
+*.key
+
+# Local planning and milestone acceptance journals
+MILESTONE v0.1.md
+/docs/phase-*.md
+/docs/milestone-*.md
+/docs/installer-validation.md
+/docs/gui-mvp-*.md
+/docs/gui-build-troubleshooting.md
+
+# One-off browser debugging probes
+/scripts/browser-close-test.mjs
+/scripts/browser-test-extension.mjs

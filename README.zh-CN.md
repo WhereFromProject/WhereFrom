@@ -6,11 +6,11 @@
 
 下载了 ZIP、安装包或 PDF，过一段时间却忘了它来自哪里？WhereFrom 读取文件上已经存在的来源元数据，显示可用的下载网址、来源页面和 Windows Zone 信息。
 
-项目仍处于早期开发，目前提供命令行工具。本地运行，不修改文件，也不解除 Mark of the Web。
+项目仍处于早期开发。已发布的 v0.1.1 提供命令行工具；当前源码另有单文件图形界面。本地查询不修改文件，也不解除 Mark of the Web。
 
 ## 安装
 
-**推荐运行 `WhereFrom-0.1.1-win-x64-Setup.exe`。** 首次安装时可自行选择目录，或保留默认的 `%LOCALAPPDATA%\Programs\WhereFrom`。安装器将所选目录加入用户 PATH，无需管理员权限，也无需另装 .NET。请选择当前 Windows 账号有写入权限的目录；路径不支持包含分号。
+如需使用完整功能，可按下文从源码构建并运行 `WhereFrom-preview-win-x64-Setup.exe`；已发布的 v0.1.1 安装器仍只包含 CLI。首次安装时可自行选择目录，或保留默认的 `%LOCALAPPDATA%\Programs\WhereFrom`。安装器将所选目录加入用户 PATH，无需管理员权限，也无需另装 .NET。请选择当前 Windows 账号有写入权限的目录；路径不支持包含分号。
 
 重复安装会沿用原安装目录。如需更换位置，请先卸载 WhereFrom，再运行安装器选择新目录。
 
@@ -18,9 +18,15 @@
 
 可通过 Windows 设置 → 应用 → 已安装的应用卸载 **WhereFrom**。卸载仅移除安装器添加的 PATH 条目，保留其他条目；重复安装不会重复添加。安装前已经存在的等价条目不会被接管或删除。
 
+### 当前源码的完整预览包
+
+在仓库根目录运行 `scripts/publish.ps1`，即可生成 `artifacts/WhereFrom-preview-win-x64.zip`。安装 [Inno Setup 6](https://jrsoftware.org/isinfo.php) 后运行 `scripts/build-installer.ps1`，可生成 `artifacts/WhereFrom-preview-win-x64-Setup.exe`。预览包包含原有 CLI、基础 GUI、Native Host 和 Chrome/Edge 扩展。
+
+预览安装器会为当前用户注册 Native Host，并在开始菜单加入 GUI。它还为单个文件增加“查看文件来源 (WhereFrom)”右键入口；Windows 11 中可能需要先点“显示更多选项”。选中文件后会直接打开 GUI 查询，卸载时该入口会被移除。已经安装旧预览版的用户需要重新运行新版安装器。便携 ZIP 不修改右键菜单。浏览器扩展仍需按安装目录中的 `BROWSER-SETUP.txt` 手动加载；安装器不会修改浏览器设置。卸载会清理本安装器的 Host 注册和程序文件，并保留 `%LOCALAPPDATA%\WhereFrom\wherefrom.db`。便携 ZIP 则需按同一说明手动注册和卸载 Host，移动便携目录后要重新注册。
+
 ### 便携 ZIP
 
-Windows x64 便携 ZIP 自带 .NET，**无需另行安装 .NET 运行时**。解压 `WhereFrom-0.1.1-win-x64.zip`，在其中的 `WhereFrom-win-x64` 文件夹打开 PowerShell：
+Windows x64 便携 ZIP 自带 .NET，**无需另行安装 .NET 运行时**。解压 `WhereFrom-preview-win-x64.zip`，在其中的 `WhereFrom-win-x64` 文件夹打开 PowerShell：
 
 ```powershell
 .\wherefrom.exe --version
@@ -28,6 +34,10 @@ Windows x64 便携 ZIP 自带 .NET，**无需另行安装 .NET 运行时**。解
 ```
 
 可按下方步骤从源码生成发布包。仓库中的说明不代表 GitHub Release 已经公开发布。发布包尚未签名；自带运行时会将原生组件解压到用户临时目录，该目录需要可写。
+
+### 单独体验图形界面
+
+在仓库根目录运行 `scripts/publish-gui.ps1`，解压生成的 `artifacts/WhereFrom-GUI-preview-win-x64.zip`，普通双击其中的 `WhereFrom.App.exe`。可选择一个文件，或从资源管理器拖入单个文件；也可把一个文件路径作为启动参数。窗口会显示 Windows 元数据和匹配的本地浏览器下载记录。复制网址或打开来源网页都需要主动点击；只有有效的 HTTP/HTTPS 地址可打开。从源码构建的完整预览安装器也已包含这个 GUI。
 
 ## 快速开始
 
@@ -59,6 +69,10 @@ No provenance information found.
 ```
 
 ## 命令
+
+浏览器下载记录使用本地 SQLite 数据库，默认位于 `%LOCALAPPDATA%\WhereFrom\wherefrom.db`。运行 `wherefrom data path` 查看实际路径；运行 `wherefrom data clear --yes` 清除已保存的下载记录。这些命令不会修改文件自带的 Windows 来源元数据。当前源码支持在开发者模式下捕获 Chrome、Edge 的**新下载**，安装步骤见 [扩展说明](extension/README.md)；已发布的 v0.1.1 包尚未包含扩展与 Native Host。
+
+单文件查询会组合 Windows 元数据与匹配的浏览器记录。文本输出标明证据来源；JSON 保持 `schemaVersion: 1` 和既有字段，并增加 `completeness`、`conflict`、`browserStoreStatus`、`historicalBrowserRecords` 与 `evidence`。浏览器 URL 入库前清除查询参数和片段；文件自带的 Windows URL 保持原样，可能含敏感参数。新浏览器记录对不超过 64 MiB 的文件保存 SHA-256。只有路径、大小、修改时间和哈希均一致，同路径记录才作为直接证据；相同内容仍可能是副本。旧版无哈希记录，以及移动或复制后发现的同内容记录，只显示为**可能关联**。可能来源只出现在证据列表，不提升为顶层 `sourceUrl`，`open <file>` 也不会自动打开它。超出哈希上限的文件保留为仅凭元数据的可能关联。JSON 仍为 `schemaVersion: 1`，新增 `possibleBrowserRecords` 与证据的 `matchBasis`。目录 `scan` 仍只读 Windows 元数据；`audit` 使用统一查询。
 
 在解压后的发布包目录中运行：
 
@@ -96,6 +110,13 @@ No provenance information found.
 
 扫描串行执行且只读，不支持 `--recursive` 或扫描 `--json`。输出按文件系统枚举顺序排列，以制表符分隔；窄终端中的长文件名可能换行。
 
+### 审计目录
+
+```powershell
+.\wherefrom.exe audit "$HOME\Downloads" --limit 100
+```
+
+只检查目录第一层，不修改被检查文件。结果区分“已知”“可能关联”“未知”和“错误”。默认最多检查 100 个文件，`--limit` 可设为 1–1000。跳过重解析点。审计表中的可能关联只显示来源域名；单独查询文件可查看具体证据及不确定性。
 ### JSON 输出
 
 在文件路径后添加 `--json`，返回一个 JSON 对象：
@@ -140,7 +161,7 @@ $result.sourceUrl
 - **只读**：不修改被检查的文件，不删除、修改或解除 Mark of the Web。
 - **本地运行**：检查本地文件无需互联网，没有账号、遥测或云同步。首次构建需要下载开发依赖。
 - **URL 可能含隐私信息**：报告和原始输出均保留查询参数和 fragment，其中可能包含 token。分享前请检查并脱敏。
-- **来源不是安全证明**：没有信息不代表文件危险，有来源网址也不代表文件安全。仅显式 open 命令会将通过校验的 HTTP/HTTPS URL 交给默认浏览器。
+- **来源不是安全证明**：没有信息不代表文件危险，有来源网址也不代表文件安全。仅显式 `open` 命令或 GUI 的“打开来源网页”按钮会将通过校验的 HTTP/HTTPS URL 交给默认浏览器。
 
 ## 使用限制
 
@@ -151,7 +172,7 @@ $result.sourceUrl
 - 单次最多读取 64 KiB，超限报错，不静默截断。
 - 默认按 UTF-8 解码并检测 BOM，不保证支持所有旧编码或损坏文本。
 - 读取不是原子快照，其他进程可能在查询期间修改文件。
-- 尚不支持 GUI、右键菜单或文件移动追踪。
+- 当前源码与完整预览包提供基础 GUI；已发布的 v0.1.1 安装器仍只有 CLI。右键菜单和文件移动追踪尚未提供。
 
 ## 从源码构建
 
@@ -170,13 +191,13 @@ dotnet run --project src/WhereFrom.Cli -- "C:\path\to\file.zip"
 
 ## 路线图
 
-当前 v0.1 CLI 支持单文件查询、JSON、非递归目录扫描和打开来源页面。浏览器捕获与存储计划留给 v0.2；GUI、资源管理器集成和文件追踪属于更后续的想法。这些未来能力尚未包含，也没有承诺日期。
+当前源码的预览版已包含 Chrome／Edge 捕获、统一查询、GUI、资源管理器文件右键入口，以及对移动或复制文件的谨慎关联。已发布的 v0.1.1 仍仅包含 CLI。Chrome 和干净系统的实机验收完成后，才能考虑稳定版发布。
 
 ## 反馈与贡献
 
-欢迎在 [GitHub Issues](https://github.com/strategist0/WhereFrom/issues) 报告问题。请说明 Windows 版本、文件获取方式、执行命令及实际输出；不要上传私人文件或未经脱敏的 URL。
+欢迎在 [GitHub Issues](https://github.com/opsorart/WhereFrom/issues) 报告问题。请说明 Windows 版本、文件获取方式、执行命令及实际输出；不要上传私人文件或未经脱敏的 URL。
 
-工程设计见 [ENGINEERING.md](ENGINEERING.md)，验证记录见 [docs/](docs/)。
+工程设计见 [ENGINEERING.md](ENGINEERING.md)，正式发布验收项见[发布验证指南](docs/release-validation.md)。
 
 ## 许可证
 

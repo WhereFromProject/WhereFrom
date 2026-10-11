@@ -19,7 +19,7 @@ WhereFrom 是一个 Windows-first 的开源文件来源追踪工具。它读取 
 
 | 主语言 | C# / .NET 10 |
 
-| GUI | WinUI 3 + Windows App SDK（v0.2 起） |
+| GUI | WPF / .NET 10（v0.2 起；原计划 WinUI 3，阶段 5 实机拖放验收后调整） |
 
 | CLI | System.CommandLine 或 Spectre.Console 之一；优先减少依赖 |
 
@@ -108,7 +108,7 @@ Chrome/Edge/Brave 扩展在下载完成后读取 DownloadItem，并通过 Native
 ```
 WhereFrom
 ├── wherefrom.exe            # CLI：稳定核心入口
-├── WhereFrom.App.exe        # WinUI 3 图形界面
+├── WhereFrom.App.exe        # WPF 图形界面
 ├── Native Messaging Host    # 浏览器扩展桥接（v0.2）
 ├── Explorer integration     # 右键菜单（v0.2/v0.3）
 └── Chromium Extension       # Chrome / Edge / Brave
@@ -120,7 +120,7 @@ WhereFrom
 
 - 作为自动化/API 边界：支持 --json、退出码、管道。
 
-- GUI 只能调用 Core，不复制业务逻辑。
+- GUI 调用统一查询能力，不复制业务逻辑。
 
 ## 3.2 GUI 的角色
 
@@ -143,7 +143,7 @@ MVP 不建议一开始写复杂 COM Shell Extension。优先使用风险更低�
 
 | Runtime | .NET 10 | 2026 新项目基线；Core 尽量保持纯 .NET |
 
-| UI | WinUI 3 / Windows App SDK | 微软当前推荐的新原生 Windows 桌面路线 |
+| UI | WPF / .NET 10 | 阶段 5 的 WinUI 3 实机拖放失败后改用稳定的 Windows 桌面拖放机制 |
 
 | Windows API | P/Invoke / CsWin32（按需） | 只在 Platform.Windows 层使用 |
 
@@ -165,7 +165,7 @@ MVP 不建议一开始写复杂 COM Shell Extension。优先使用风险更低�
 
 
 
-备注：微软截至 2026-09 的 Windows 开发文档仍将 WinUI 3 + Windows App SDK 作为新原生桌面应用的推荐路径。
+备注：WinUI 3 仍是微软推荐的新原生桌面路线；本项目的简单单文件窗口在 Windows 10 实机中无法从资源管理器拖入文件，改用 WPF 后拖放查询通过验收。底层查询与界面框架保持分离。
 
 # 5. 总体架构
 
@@ -176,7 +176,7 @@ MVP 不建议一开始写复杂 COM Shell Extension。优先使用风险更低�
                                │ Native Messaging
                                ▼
 ┌───────────────┐     ┌──────────────────────┐     ┌───────────────┐
-│ wherefrom CLI │────▶│   WhereFrom.Core     │◀────│ WinUI 3 App   │
+│ wherefrom CLI │────▶│   WhereFrom.Core     │◀────│ WPF App       │
 └───────────────┘     └──────────┬───────────┘     └───────────────┘
                                  │
                  ┌───────────────┼─────────────────┐
@@ -224,7 +224,7 @@ NativeHost ┘      ▲
                   │
         Platform.Windows
 
-Core 不引用 WinUI / Registry / Windows Shell。
+Core 不引用 WPF / Registry / Windows Shell。
 ```
 
 核心约束：WhereFrom.Core 必须可在不加载 Windows UI 的测试环境中运行。Platform.Windows 可以引用 Windows-specific API，但不得把 Windows 类型泄漏到 Core 公共模型。
@@ -754,7 +754,7 @@ tag v*:
 
 | v0.2 Browser Capture | Chromium 扩展 + Native Messaging + SQLite | 新下载能稳定记录 URL/finalUrl/referrer/time |
 
-| v0.3 GUI | WinUI 3 File Detail + Recent + Search | 非开发者可使用；主流程不需要 terminal |
+| v0.3 GUI | WPF File Detail + Recent + Search | 非开发者可使用；主流程不需要 terminal |
 
 | v0.4 Explorer | 右键打开 File Detail | 一秒理解的核心产品体验 |
 
@@ -840,7 +840,7 @@ tag v*:
 
 # 22. v0.3 GUI 任务
 
-1. WinUI 3 App shell。
+1. WPF App shell。
 
 1. File Detail：通过命令行参数/文件激活打开指定文件。
 
@@ -995,7 +995,7 @@ public sealed class ProvenanceResolver
 
 | ADR-002 | C#/.NET 10 | Windows 集成与开发效率优先 |
 
-| ADR-003 | WinUI 3 | 新原生 Windows UI 推荐路线 |
+| ADR-003 | WPF（原计划 WinUI 3） | 阶段 5 的 WinUI 3 外部文件拖放实机失败；WPF 拖放查询通过验收 |
 
 | ADR-004 | CLI first | 降低 MVP 风险、利于自动化与测试 |
 

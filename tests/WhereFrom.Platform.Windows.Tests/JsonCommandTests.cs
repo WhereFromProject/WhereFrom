@@ -25,7 +25,9 @@ public class JsonCommandTests
         var root = json.RootElement;
         Assert.Equal(
             ["schemaVersion", "path", "hasProvenance", "zone", "sourceUrl", "referrerUrl"],
-            root.EnumerateObject().Select(property => property.Name).ToArray());
+            root.EnumerateObject().Take(6).Select(property => property.Name).ToArray());
+        Assert.Equal("sourceUrl", root.GetProperty("completeness").GetString());
+        Assert.Equal("windows", root.GetProperty("evidence")[0].GetProperty("type").GetString());
         Assert.Equal(1, root.GetProperty("schemaVersion").GetInt32());
         Assert.Equal(file.Path, root.GetProperty("path").GetString());
         Assert.True(root.GetProperty("hasProvenance").GetBoolean());

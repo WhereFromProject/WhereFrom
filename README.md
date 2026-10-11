@@ -6,11 +6,11 @@ Find the source information recorded on a Windows file.
 
 Downloaded a ZIP, installer, or PDF and forgotten where it came from? WhereFrom reads the source metadata already attached to the file and shows the available download URL, referring page, and Windows zone.
 
-WhereFrom is an early-stage command-line tool. It works locally and does not modify your files or remove Mark of the Web.
+WhereFrom is in early development. The published v0.1.1 package provides a command-line tool; the current source tree also has a single-file GUI. Local queries do not modify your files or remove Mark of the Web.
 
 ## Installation
 
-**Recommended: run `WhereFrom-0.1.1-win-x64-Setup.exe`.** On first installation, choose a folder or keep the default `%LOCALAPPDATA%\Programs\WhereFrom`. The installer adds the selected folder to your user PATH and requires no administrator privileges or separate .NET installation. Choose a folder your Windows account can write to; paths containing semicolons are not supported.
+For the full-feature source preview, build and run `WhereFrom-preview-win-x64-Setup.exe` as described below. The published v0.1.1 installer remains CLI-only. On first installation, choose a folder or keep the default `%LOCALAPPDATA%\Programs\WhereFrom`. The installer adds the selected folder to your user PATH and requires no administrator privileges or separate .NET installation. Choose a folder your Windows account can write to; paths containing semicolons are not supported.
 
 Reinstalling uses the existing installation folder. To change its location, uninstall WhereFrom first, then run setup again and select the new folder.
 
@@ -18,9 +18,15 @@ Close all terminal windows and open a new terminal after installation. You can t
 
 Uninstall **WhereFrom** through Windows Settings → Apps → Installed apps. The uninstaller removes its own PATH entry while preserving other entries. Reinstalling does not duplicate the entry. An equivalent entry that existed before installation is left untouched.
 
+### Full preview package from source
+
+Run `scripts/publish.ps1` from the repository root to create `artifacts/WhereFrom-preview-win-x64.zip`. With [Inno Setup 6](https://jrsoftware.org/isinfo.php) installed, run `scripts/build-installer.ps1` to create `artifacts/WhereFrom-preview-win-x64-Setup.exe`. The preview includes the existing CLI, basic GUI, Native Host, and Chrome/Edge extension.
+
+The preview installer registers the Native Host for the current user and adds a GUI Start menu shortcut. It also adds a file context-menu command, “查看文件来源 (WhereFrom)”, which opens the selected file in the GUI. On Windows 11, it may appear under **Show more options**. Re-run the preview installer to add it to an existing installation; uninstall removes the command. The portable ZIP does not change Explorer menus. Load the extension manually using `BROWSER-SETUP.txt` in the installation directory; the installer does not change browser settings. Uninstall removes this installer's Host registration and program files but preserves `%LOCALAPPDATA%\WhereFrom\wherefrom.db`. The portable ZIP requires the registration and removal steps in the same guide; re-register after moving its directory.
+
 ### Portable ZIP
 
-The Windows x64 portable ZIP bundles .NET; **you do not need to install a .NET runtime**. Extract `WhereFrom-0.1.1-win-x64.zip`, open PowerShell in its `WhereFrom-win-x64` folder, and run:
+The Windows x64 portable ZIP bundles .NET; **you do not need to install a .NET runtime**. Extract `WhereFrom-preview-win-x64.zip`, open PowerShell in its `WhereFrom-win-x64` folder, and run:
 
 ```powershell
 .\wherefrom.exe --version
@@ -28,6 +34,10 @@ The Windows x64 portable ZIP bundles .NET; **you do not need to install a .NET r
 ```
 
 A package can be built from source using the steps below. This repository does not imply that a public GitHub Release has already been published. Packages are unsigned. The bundled runtime extracts native components into the user's temporary directory, which must be writable.
+
+### Try the GUI alone
+
+Run `scripts/publish-gui.ps1` from the repository root, extract `artifacts/WhereFrom-GUI-preview-win-x64.zip`, and open `WhereFrom.App.exe` normally. Select one file, drag one file from File Explorer, or pass one file path as a launch argument. The window shows Windows metadata and matching local browser download records. Copying a URL and opening a source page require an explicit click; only valid HTTP/HTTPS URLs can be opened. The full source-built preview installer also includes this GUI.
 
 ## Quick start
 
@@ -59,6 +69,10 @@ No provenance information found.
 ```
 
 ## Commands
+
+Browser download records use a local SQLite database at `%LOCALAPPDATA%\WhereFrom\wherefrom.db`. Inspect its path with `wherefrom data path`; permanently clear saved download records with `wherefrom data clear --yes`. These commands do not change a file's Windows source metadata. The current source tree supports developer-mode capture of **new** Chrome and Edge downloads; see [extension setup](extension/README.md). The published v0.1.1 package does not include the extension or Native Host yet.
+
+Single-file queries combine Windows metadata and matching browser records. Text output labels each evidence source; JSON keeps `schemaVersion: 1` and its existing fields while adding `completeness`, `conflict`, `browserStoreStatus`, `historicalBrowserRecords`, and `evidence`. Browser URLs have query strings and fragments removed before storage; Windows metadata URLs remain unchanged and may contain private parameters. New browser records also store SHA-256 for files up to 64 MiB. A same-path record is direct evidence only when path, size, modified time, and hash agree; identical content can still be a copy. Older records without hashes, and same-content records found after a move or copy, appear only as **possible associations**. Possible sources are shown in the evidence list, never promoted to the top-level `sourceUrl` or opened by `open <file>`. Files above the hash limit remain metadata-only possible associations. JSON remains `schemaVersion: 1` and adds `possibleBrowserRecords` and evidence `matchBasis`. Directory `scan` still reads Windows metadata only; `audit` uses the combined query.
 
 From the extracted package directory:
 
@@ -96,6 +110,13 @@ A completed scan returns 0, including an empty directory or all-unknown results.
 
 Scanning is sequential and read-only. `--recursive` and scan `--json` are not supported. Entry order follows the filesystem; the tab-separated display may wrap long filenames in narrow terminals.
 
+### Audit a directory
+
+```powershell
+.\wherefrom.exe audit "$HOME\Downloads" --limit 100
+```
+
+Audits only the first level and never changes inspected files. It separates `Known`, `Possible`, `Unknown`, and `Error` results. The default limit is 100 files; set `--limit` from 1 to 1000. Reparse points are skipped. A possible match displays only the source host in the audit table; inspect that file directly to see the evidence and its uncertainty.
 ### JSON output
 
 Append `--json` after the file path to return one JSON object:
@@ -140,7 +161,7 @@ For `debug-zone`, code 0 means the stream was read, including an empty stream; c
 - **Read-only:** WhereFrom does not modify inspected files or delete, change, or unblock Mark of the Web.
 - **Local:** Checking local files does not require internet access. There are no accounts, telemetry, or cloud sync. Building for the first time requires downloading development dependencies.
 - **URLs may be private:** Both reports and raw output preserve query parameters and fragments, which can contain tokens. Review and redact output before sharing it.
-- **Provenance is not a safety verdict:** Missing information does not make a file dangerous, and a recorded URL does not prove a file is safe. Only the explicit open command dispatches validated HTTP/HTTPS URLs to your default browser.
+- **Provenance is not a safety verdict:** Missing information does not make a file dangerous, and a recorded URL does not prove a file is safe. Only the explicit `open` command or the GUI's open button dispatches validated HTTP/HTTPS URLs to your default browser.
 
 ## Limitations
 
@@ -151,7 +172,7 @@ For `debug-zone`, code 0 means the stream was read, including an empty stream; c
 - Metadata reads are limited to 64 KiB. Oversized data produces an error, not silent truncation.
 - Text is decoded as UTF-8 by default, with BOM detection. Not all legacy encodings or damaged text are supported.
 - Reads are not atomic snapshots; another process can change the file during inspection.
-- A GUI, Explorer integration, and file-move tracking are not available.
+- The current source tree and full preview package have a basic GUI; the published v0.1.1 installer remains CLI-only. Explorer integration and file-move tracking are not available yet.
 
 ## Build from source
 
@@ -170,13 +191,13 @@ Publishing creates the portable ZIP and SHA256 checksum under `artifacts/`. See 
 
 ## Roadmap
 
-The current v0.1 CLI supports single-file queries, JSON, non-recursive directory scanning and opening source pages. Browser capture/storage is planned for v0.2; GUI, Explorer integration and file tracking are later ideas. These future capabilities are not included, and dates are not committed.
+The source-built preview includes Chrome/Edge capture, unified queries, the GUI, an Explorer file menu, and tentative content-based associations for moved or copied files. The published v0.1.1 release remains CLI-only. Chrome and clean-machine validation are still needed before a stable full-feature release.
 
 ## Feedback and contributions
 
-Report problems through [GitHub Issues](https://github.com/strategist0/WhereFrom/issues). Include your Windows version, how the file was obtained, the command you ran, and the output. Do not upload private files or unredacted URLs.
+Report problems through [GitHub Issues](https://github.com/opsorart/WhereFrom/issues). Include your Windows version, how the file was obtained, the command you ran, and the output. Do not upload private files or unredacted URLs.
 
-See [ENGINEERING.md](ENGINEERING.md) for the engineering design and [docs/](docs/) for validation records.
+See [ENGINEERING.md](ENGINEERING.md) for the engineering design and [release validation](docs/release-validation.md) for the release checklist.
 
 ## License
 

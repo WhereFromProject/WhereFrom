@@ -9,8 +9,46 @@ New-Item -ItemType Directory -Path $package -Force | Out-Null
 dotnet publish (Join-Path $repo 'src/WhereFrom.Cli/WhereFrom.Cli.csproj') -c Release -p:PublishProfile=win-x64 -p:DebugType=none -p:DebugSymbols=false -o $package
 if ($LASTEXITCODE -ne 0) { throw 'Publish failed.' }
 
+$gui = Join-Path $package 'GUI'
+dotnet publish (Join-Path $repo 'src/WhereFrom.App/WhereFrom.App.csproj') `
+    -c Release -p:Platform=x64 -r win-x64 --self-contained true `
+    -p:PublishSingleFile=false -p:PublishTrimmed=false `
+    -p:DebugType=none -p:DebugSymbols=false -o $gui
+if ($LASTEXITCODE -ne 0) { throw 'GUI publish failed.' }
+
+$hostFolder = Join-Path $package 'NativeHost'
+dotnet publish (Join-Path $repo 'src/WhereFrom.NativeHost/WhereFrom.NativeHost.csproj') `
+    -c Release -r win-x64 --self-contained true `
+    -p:PublishSingleFile=false -p:PublishTrimmed=false `
+    -p:DebugType=none -p:DebugSymbols=false -o $hostFolder
+if ($LASTEXITCODE -ne 0) { throw 'Native Host publish failed.' }
+
+$extensionId = & (Join-Path $repo 'scripts/get-extension-id.ps1')
+if ($extensionId -notmatch '^[a-p]{32}$') { throw 'Invalid extension ID.' }
+if (-not ([IO.File]::ReadAllText((Join-Path $repo 'docs/browser-setup.txt')).Contains($extensionId))) {
+    throw 'Browser setup guide does not match the extension ID.'
+}
+$allowlist = @{ chrome = $extensionId; edge = $extensionId } | ConvertTo-Json
+[IO.File]::WriteAllText((Join-Path $hostFolder 'native-host-allowlist.json'),
+    $allowlist, [Text.UTF8Encoding]::new($false))
+$extensionFolder = Join-Path $package 'extension'
+New-Item -ItemType Directory -Path $extensionFolder | Out-Null
+foreach ($file in @('manifest.json', 'worker.js', 'popup.html', 'popup.js', 'README.md')) {
+    Copy-Item -LiteralPath (Join-Path $repo "extension/$file") -Destination $extensionFolder
+}
+foreach ($file in @('wherefrom.exe', 'GUI/WhereFrom.App.exe',
+    'NativeHost/WhereFrom.NativeHost.exe', 'extension/manifest.json')) {
+    if (-not (Test-Path -LiteralPath (Join-Path $package $file))) {
+        throw "Package is incomplete: $file"
+    }
+}
+
 foreach ($name in @('LICENSE', 'README.md', 'README.zh-CN.md')) {
     Copy-Item -LiteralPath (Join-Path $repo $name) -Destination $package
+}
+Copy-Item -LiteralPath (Join-Path $repo 'docs/browser-setup.txt') -Destination (Join-Path $package 'BROWSER-SETUP.txt')
+foreach ($script in @('register-native-host.ps1', 'unregister-native-host.ps1')) {
+    Copy-Item -LiteralPath (Join-Path $repo "scripts/$script") -Destination $package
 }
 # Include the exact runtime package's license and third-party notices.
 $assets = Get-Content -LiteralPath (Join-Path $repo 'src/WhereFrom.Cli/obj/project.assets.json') -Raw | ConvertFrom-Json
@@ -26,13 +64,9 @@ foreach ($folder in $assets.packageFolders.PSObject.Properties.Name) {
 if ($null -eq $runtimePath) { throw 'Runtime package directory not found.' }
 Copy-Item -LiteralPath (Join-Path $runtimePath 'LICENSE.TXT') -Destination (Join-Path $package 'DOTNET-LICENSE.txt')
 Copy-Item -LiteralPath (Join-Path $runtimePath 'THIRD-PARTY-NOTICES.TXT') -Destination (Join-Path $package 'DOTNET-THIRD-PARTY-NOTICES.txt')
-$docs = Join-Path $package 'docs'
-New-Item -ItemType Directory -Path $docs | Out-Null
-Copy-Item -Path (Join-Path $repo 'docs/*.md') -Destination $docs
-Copy-Item -LiteralPath (Join-Path $repo 'ENGINEERING.md') -Destination $package
 Copy-Item -LiteralPath (Join-Path $repo 'scripts/smoke-test.ps1') -Destination $package
 
-$zip = Join-Path $artifacts 'WhereFrom-0.1.1-win-x64.zip'
+$zip = Join-Path $artifacts 'WhereFrom-preview-win-x64.zip'
 Compress-Archive -LiteralPath $package -DestinationPath $zip -Force
 $hash = (Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash.ToLowerInvariant()
 [IO.File]::WriteAllText((Join-Path $artifacts 'SHA256SUMS.txt'),
