@@ -1,49 +1,16 @@
-ENGLISH | [简体中文](README.zh-CN.md)
-
 # WhereFrom
 
-Find the source information recorded on a Windows file.
+**Find the source information Windows and your browser recorded for a file.**
 
-Downloaded a ZIP, installer, or PDF and forgotten where it came from? WhereFrom reads the source metadata already attached to the file and shows the available download URL, referring page, and Windows zone.
+[简体中文](README.zh-CN.md) · [Engineering notes](ENGINEERING.md) · [Documentation](docs/README.md)
 
-WhereFrom is in early development. The published v0.1.1 package provides a command-line tool; the current source tree also has a single-file GUI. Local queries do not modify your files or remove Mark of the Web.
+WhereFrom shows the available download URL, referring page, and Windows zone. It reads the file's `Zone.Identifier` stream and, in the current source-built preview, can also consult a local record of new Chrome/Edge downloads. It does not reconstruct missing history or decide whether a file is safe. Queries do not alter the inspected file or remove Mark of the Web.
 
-## Installation
-
-For the full-feature source preview, build and run `WhereFrom-preview-win-x64-Setup.exe` as described below. The published v0.1.1 installer remains CLI-only. On first installation, choose a folder or keep the default `%LOCALAPPDATA%\Programs\WhereFrom`. The installer adds the selected folder to your user PATH and requires no administrator privileges or separate .NET installation. Choose a folder your Windows account can write to; paths containing semicolons are not supported.
-
-Reinstalling uses the existing installation folder. To change its location, uninstall WhereFrom first, then run setup again and select the new folder.
-
-Close all terminal windows and open a new terminal after installation. You can then run `wherefrom --version` or `wherefrom "C:\path\to\file.zip"` from any directory. If a terminal host still has the old environment, restart that host or sign out and back in.
-
-Uninstall **WhereFrom** through Windows Settings → Apps → Installed apps. The uninstaller removes its own PATH entry while preserving other entries. Reinstalling does not duplicate the entry. An equivalent entry that existed before installation is left untouched.
-
-### Full preview package from source
-
-Run `scripts/publish.ps1` from the repository root to create `artifacts/WhereFrom-preview-win-x64.zip`. With [Inno Setup 6](https://jrsoftware.org/isinfo.php) installed, run `scripts/build-installer.ps1` to create `artifacts/WhereFrom-preview-win-x64-Setup.exe`. The preview includes the existing CLI, basic GUI, Native Host, and Chrome/Edge extension.
-
-The preview installer registers the Native Host for the current user and adds a GUI Start menu shortcut. It also adds a file context-menu command, “查看文件来源 (WhereFrom)”, which opens the selected file in the GUI. On Windows 11, it may appear under **Show more options**. Re-run the preview installer to add it to an existing installation; uninstall removes the command. The portable ZIP does not change Explorer menus. Load the extension manually using `BROWSER-SETUP.txt` in the installation directory; the installer does not change browser settings. Uninstall removes this installer's Host registration and program files but preserves `%LOCALAPPDATA%\WhereFrom\wherefrom.db`. The portable ZIP requires the registration and removal steps in the same guide; re-register after moving its directory.
-
-### Portable ZIP
-
-The Windows x64 portable ZIP bundles .NET; **you do not need to install a .NET runtime**. Extract `WhereFrom-preview-win-x64.zip`, open PowerShell in its `WhereFrom-win-x64` folder, and run:
+The published **v0.1.1** package is CLI-only. The **source-built preview** adds a GUI, browser capture, and an Explorer file menu; it is not a new public release.
 
 ```powershell
-.\wherefrom.exe --version
-.\wherefrom.exe "C:\Users\YourName\Downloads\example.zip"
+wherefrom "C:\Users\YourName\Downloads\example.zip"
 ```
-
-A package can be built from source using the steps below. This repository does not imply that a public GitHub Release has already been published. Packages are unsigned. The bundled runtime extracts native components into the user's temporary directory, which must be writable.
-
-### Try the GUI alone
-
-Run `scripts/publish-gui.ps1` from the repository root, extract `artifacts/WhereFrom-GUI-preview-win-x64.zip`, and open `WhereFrom.App.exe` normally. Select one file, drag one file from File Explorer, or pass one file path as a launch argument. The window shows Windows metadata and matching local browser download records. Copying a URL and opening a source page require an explicit click; only valid HTTP/HTTPS URLs can be opened. The full source-built preview installer also includes this GUI.
-
-## Quick start
-
-Replace the example path with your file. Keep the quotes if the path contains spaces.
-
-A file with complete metadata might produce:
 
 ```text
 example.zip
@@ -58,147 +25,103 @@ Windows Zone
   Internet (3)
 ```
 
-Source is the recorded download address; it may be an API or CDN endpoint. Referrer may be the human-facing page. WhereFrom keeps them separate and does not invent missing information.
+## Current capabilities
 
-If only the zone is available, it shows the zone followed by `No source URL recorded.`. If no usable provenance is available, it shows:
+| Capability | Published v0.1.1 | Source-built preview |
+| --- | --- | --- |
+| Inspect `Zone.Identifier` | CLI text and schema v1 JSON | CLI and GUI |
+| Scan a directory | First-level `scan` | `scan` plus bounded `audit` |
+| Open a recorded page | Explicit `open` command | CLI or explicit GUI click |
+| Browser evidence | — | New completed Chrome/Edge downloads via extension and Native Host |
+| Local records | — | SQLite under `%LOCALAPPDATA%\WhereFrom` |
+| File copies and moves | — | Same-content historical records shown only as possible associations |
+| Installation | Per-user installer or self-contained ZIP | Preview installer or ZIP; GUI and removable Explorer menu |
 
-```text
-example.zip
+Chrome has not been manually tested on the current development machine. The [release checklist](docs/release-validation.md) lists the remaining clean-machine checks.
 
-No provenance information found.
-```
+## Install the preview
 
-## Commands
-
-Browser download records use a local SQLite database at `%LOCALAPPDATA%\WhereFrom\wherefrom.db`. Inspect its path with `wherefrom data path`; permanently clear saved download records with `wherefrom data clear --yes`. These commands do not change a file's Windows source metadata. The current source tree supports developer-mode capture of **new** Chrome and Edge downloads; see [extension setup](extension/README.md). The published v0.1.1 package does not include the extension or Native Host yet.
-
-Single-file queries combine Windows metadata and matching browser records. Text output labels each evidence source; JSON keeps `schemaVersion: 1` and its existing fields while adding `completeness`, `conflict`, `browserStoreStatus`, `historicalBrowserRecords`, and `evidence`. Browser URLs have query strings and fragments removed before storage; Windows metadata URLs remain unchanged and may contain private parameters. New browser records also store SHA-256 for files up to 64 MiB. A same-path record is direct evidence only when path, size, modified time, and hash agree; identical content can still be a copy. Older records without hashes, and same-content records found after a move or copy, appear only as **possible associations**. Possible sources are shown in the evidence list, never promoted to the top-level `sourceUrl` or opened by `open <file>`. Files above the hash limit remain metadata-only possible associations. JSON remains `schemaVersion: 1` and adds `possibleBrowserRecords` and evidence `matchBasis`. Directory `scan` still reads Windows metadata only; `audit` uses the combined query.
-
-From the extracted package directory:
-
-```powershell
-.\wherefrom.exe "C:\path\to\file.exe"
-.\wherefrom.exe --help
-.\wherefrom.exe --version
-```
-
-Provide one file at a time. For a filename beginning with `-` or named `debug-zone`, use its full path or prefix it with `.\`.
-
-### Open a source page
+On Windows x64, build the current preview from the repository root:
 
 ```powershell
-.\wherefrom.exe open "C:\path\to\file.zip"
+./scripts/publish.ps1
+./scripts/build-installer.ps1
 ```
 
-Opens the recorded Referrer URL in your default browser, or the Source URL when no parsed Referrer is available. The selected address is printed after `Opening:`. Only valid HTTP/HTTPS URLs are allowed. If the selected address uses another scheme, the command refuses it without falling back to another URL.
+The second command requires [Inno Setup 6](https://jrsoftware.org/isinfo.php). Outputs are `artifacts/WhereFrom-preview-win-x64.zip`, `artifacts/WhereFrom-preview-win-x64-Setup.exe`, and `artifacts/SHA256SUMS.txt`. These packages are unsigned. Their names do not imply a GitHub Release has been published.
 
-With no URL, it prints `No source URL is available for this file.` and returns 1. Refused URLs return 2, browser launch failures return 4, and successful dispatch returns 0. File-reading errors retain the single-file exit codes below. Exit 0 means Windows accepted the launch; it does not confirm that the page loaded.
+The installer runs for the current user without elevation, adds the CLI to the user PATH, registers the Native Host, and installs the GUI and the single-file Explorer menu. Open a new terminal after installation. Reinstalling keeps the existing installation directory; to change it, uninstall first. Uninstall removes installer-owned PATH, Host, and menu registrations while leaving `%LOCALAPPDATA%\WhereFrom\wherefrom.db` in place. The ZIP changes no system registrations by itself and includes registration/removal scripts. Both formats bundle .NET and need a writable user temporary directory.
 
-This command explicitly opens a browser and may contact the recorded website. Full query parameters and fragments are passed through. Regular queries and scans never open URLs. `open` does not support `--json`.
+Load the extension manually in Chrome or Edge Developer mode using [the browser setup guide](docs/browser-setup.txt), also included in the package as `BROWSER-SETUP.txt`. It records only new completed downloads, not past history; failed, canceled, and incognito downloads are not saved. Browser extension removal is manual.
 
-### Scan a directory
+The published v0.1.1 installer and ZIP remain valid for users who only need the original CLI.
+
+## Use WhereFrom
 
 ```powershell
-.\wherefrom.exe scan "$HOME\Downloads"
+wherefrom "C:\path\to\file.zip"
+wherefrom "C:\path\to\file.zip" --json
+wherefrom scan "$HOME\Downloads"
+wherefrom audit "$HOME\Downloads" --limit 100
 ```
 
-Scans only the first level, including hidden/system files. Each row shows the filename and the first available Referrer host, Source host, or Windows zone. Valid URLs without a host are labeled `URL recorded (no host)`. Files without usable evidence show `Unknown`; failed reads show `Error`, with details on standard error. Full URLs remain available through single-file queries.
+The GUI can select or accept a single dropped file, or start with one file path as an argument. It shows Windows and browser evidence separately. Copying a URL or opening a webpage requires a click. The Explorer entry opens the selected file in this GUI.
 
-The summary reports `Scanned`, `Known provenance`, `Unknown`, `Errors`, and `Skipped reparse points`. Scanned equals known + unknown + errors. Ordinary subdirectories are ignored; reparse points (including links and junctions) are skipped. If the scan directory itself is a reparse point, provide its target directory directly.
+| Command | Result |
+| --- | --- |
+| `wherefrom <file>` | Show available Windows and direct browser evidence |
+| `wherefrom <file> --json` | Emit one schema v1 JSON object |
+| `wherefrom scan <directory>` | Read first-level Windows metadata only |
+| `wherefrom audit <directory> [--limit 1..1000]` | Classify first-level files as Known, Possible, Unknown, or Error |
+| `wherefrom open <file>` | Explicitly open a validated Referrer or Source URL |
+| `wherefrom debug-zone <file>` | Display raw `Zone.Identifier` metadata |
+| `wherefrom data path` / `data clear --yes` | Show the local database path / explicitly clear browser records |
+| `wherefrom --help` / `--version` | Show help / version |
 
-A completed scan returns 0, including an empty directory or all-unknown results. Invalid directory input returns 2; a missing/inaccessible root returns 3; file read failures or an interrupted directory enumeration return 4; unexpected failures return 5. A failed file does not stop the remaining files. An incomplete enumeration is explicitly reported on standard error, with partial counts.
+Quote paths containing spaces. For a filename beginning with `-` or named `debug-zone`, use a full path or a `.\` prefix. `scan` and `audit` do not recurse and skip reparse points. `audit` checks at most 100 files by default, or 1–1000 with `--limit`; the table shows a source host rather than the full URL.
 
-Scanning is sequential and read-only. `--recursive` and scan `--json` are not supported. Entry order follows the filesystem; the tab-separated display may wrap long filenames in narrow terminals.
+### Evidence and JSON
 
-### Audit a directory
+`Source` is the recorded download address, sometimes a CDN or API endpoint. `Referrer` may be the page you visited. Windows metadata URLs are shown as recorded and may contain private query parameters. Browser URLs are stored without query strings or fragments, and no request headers or cookies are saved.
+
+For new browser records on files up to 64 MiB, WhereFrom stores SHA-256. A record at the same path is direct browser evidence only when path, size, modification time, and hash agree. Older records without a hash, larger files, and matching content found at a different path are labeled **possible associations**. Equal content does not prove that two paths identify the same file. Possible URLs stay in the evidence list; they are not promoted to the top-level source URL or opened by `open` or the GUI button. Conflicting Windows and browser evidence is displayed side by side.
+
+JSON keeps `schemaVersion: 1` and the existing `path`, `hasProvenance`, `zone`, `sourceUrl`, and `referrerUrl` fields. Additive fields describe completeness, conflict, historical and possible browser records, and structured evidence. Missing URLs and unknown zone names are `null`. A completed no-evidence query still returns JSON with exit code 1; argument and read errors return no JSON. Keep standard error separate from a JSON pipeline.
+
+`open` uses the parsed Referrer first, then Source when no parsed Referrer exists. Only valid HTTP/HTTPS URLs are accepted. A rejected Referrer is not silently replaced by Source. Exit 0 means Windows accepted the launch request, not that the page loaded. Full Windows metadata URLs, including query parameters, are passed through only after the explicit action.
+
+| Exit code | Meaning for a file query |
+| --- | --- |
+| 0 | Usable evidence found |
+| 1 | Query completed without usable evidence |
+| 2 | Invalid argument or path; directory given as file |
+| 3 | File not found or access denied |
+| 4 | Read or storage failure |
+| 5 | Unexpected internal error |
+
+Other commands document their specific edge cases in `wherefrom --help` and the [release checklist](docs/release-validation.md). `debug-zone` returns 0 for a readable stream, even if empty, and 1 when the stream is absent.
+
+## Privacy and limitations
+
+- Inspection is local and does not change file contents or Mark of the Web. Only explicit page opening makes a browser request.
+- There are no accounts, telemetry, cloud sync, background service, or old-download import. Building from source may download development dependencies.
+- A URL is provenance evidence, not a safety rating. Unknown provenance does not mean a file is dangerous.
+- Share command output only after redacting private filenames, URLs, query parameters, and tokens.
+- Windows 11 x64 on NTFS has been tested. Other file systems and network shares may behave differently. `Zone.Identifier` reads are capped at 64 KiB; damaged fields are reported without inventing missing data.
+- Query results are not atomic snapshots if another process changes a file during inspection.
+
+## Build and contribute
+
+Install the [.NET 10 SDK](https://learn.microsoft.com/dotnet/core/install/windows) on Windows and run:
 
 ```powershell
-.\wherefrom.exe audit "$HOME\Downloads" --limit 100
+dotnet restore WhereFrom.sln
+dotnet test WhereFrom.sln -c Release -p:Platform=x64
+node --test extension/test/worker.test.js
+./scripts/publish.ps1
+./scripts/check-repository-hygiene.ps1 -Package artifacts/WhereFrom-preview-win-x64.zip
 ```
 
-Audits only the first level and never changes inspected files. It separates `Known`, `Possible`, `Unknown`, and `Error` results. The default limit is 100 files; set `--limit` from 1 to 1000. Reparse points are skipped. A possible match displays only the source host in the audit table; inspect that file directly to see the evidence and its uncertainty.
-### JSON output
+The [Windows workflow](.github/workflows/windows.yml) also builds and tests the installer. See [ENGINEERING.md](ENGINEERING.md) for architecture and maintenance rules, and [docs/README.md](docs/README.md) for user and release documentation. Open an [issue](https://github.com/opsorart/WhereFrom/issues) with a reproducible example and redacted output.
 
-Append `--json` after the file path to return one JSON object:
-
-```powershell
-$result = .\wherefrom.exe "C:\path\to\file.exe" --json | ConvertFrom-Json
-$code = $LASTEXITCODE
-$result.sourceUrl
-```
-
-The version 1 contract always includes `schemaVersion` (1), `path` (the supplied path), `hasProvenance` (boolean), `zone` (`{ "id": 3, "name": "Internet" }` or `null`), `sourceUrl`, and `referrerUrl`. Missing URLs and unknown zone names are `null`; properties are never omitted. URLs retain their recorded spelling, query parameters, and fragments after JSON decoding.
-
-Completed queries return JSON even when no provenance is available (exit code 1). Argument and read errors return no JSON; use the exit code and standard error to distinguish them. Metadata warnings go only to standard error. Keep standard error separate from the JSON pipeline; do not merge it with `2>&1`.
-
-### Raw metadata
-
-The diagnostic command shows the original metadata text:
-
-```powershell
-.\wherefrom.exe debug-zone "C:\path\to\file.exe"
-```
-
-It preserves field order and URLs, while displaying dangerous control characters as visible escapes such as `\u0000`. An empty stream is reported separately from a missing stream.
-
-### Using scripts
-
-Reports go to standard output. Errors and metadata warnings go to standard error. In PowerShell, inspect `$LASTEXITCODE`:
-
-| Code | Meaning                                                                                                            |
-| ---- | ------------------------------------------------------------------------------------------------------------------ |
-| 0    | Usable provenance was found, or help/version was displayed                                                         |
-| 1    | The query completed but no usable provenance was found                                                             |
-| 2    | Invalid arguments, an invalid path, or a directory instead of a file                                               |
-| 3    | File not found or access denied; see the error message                                                             |
-| 4    | Read failure, unavailable ADS support, a failed capability query, invalid encoding, or the size limit was exceeded |
-| 5    | An unexpected internal error                                                                                       |
-
-For `debug-zone`, code 0 means the stream was read, including an empty stream; code 1 means the stream was not found.
-
-## Privacy and safety
-
-- **Read-only:** WhereFrom does not modify inspected files or delete, change, or unblock Mark of the Web.
-- **Local:** Checking local files does not require internet access. There are no accounts, telemetry, or cloud sync. Building for the first time requires downloading development dependencies.
-- **URLs may be private:** Both reports and raw output preserve query parameters and fragments, which can contain tokens. Review and redact output before sharing it.
-- **Provenance is not a safety verdict:** Missing information does not make a file dangerous, and a recorded URL does not prove a file is safe. Only the explicit `open` command or the GUI's open button dispatches validated HTTP/HTTPS URLs to your default browser.
-
-## Limitations
-
-- Windows only. Local Windows 11 x64 / NTFS has been tested. Other file systems and network shares may behave differently.
-- WhereFrom cannot recover missing metadata or infer a file's history from its absence.
-- Damaged fields are reported while other usable fields remain visible. Unknown zone numbers are shown without a guessed name.
-- If no stream is found, the tool checks file-system support. A failed capability query is reported as an error rather than a claim that the file has no provenance. Some network shares do not support this query.
-- Metadata reads are limited to 64 KiB. Oversized data produces an error, not silent truncation.
-- Text is decoded as UTF-8 by default, with BOM detection. Not all legacy encodings or damaged text are supported.
-- Reads are not atomic snapshots; another process can change the file during inspection.
-- The current source tree and full preview package have a basic GUI; the published v0.1.1 installer remains CLI-only. Explorer integration and file-move tracking are not available yet.
-
-## Build from source
-
-On Windows, install the [.NET 10 SDK](https://learn.microsoft.com/dotnet/core/install/windows), clone this repository, and run from its root:
-
-```powershell
-dotnet build
-dotnet test
-dotnet run --project src/WhereFrom.Cli -- "C:\path\to\file.zip"
-.\scripts\publish.ps1
-```
-
-To also build the installer, install [Inno Setup 6](https://jrsoftware.org/isdl.php) and run `./scripts/build-installer.ps1` after publishing. A custom compiler path can be supplied with `-Compiler`.
-
-Publishing creates the portable ZIP and SHA256 checksum under `artifacts/`. See [release validation](docs/release-validation.md) for package checks on a machine without .NET installed. The Windows workflow performs restore, build, test, publish and package smoke checks.
-
-## Roadmap
-
-The source-built preview includes Chrome/Edge capture, unified queries, the GUI, an Explorer file menu, and tentative content-based associations for moved or copied files. The published v0.1.1 release remains CLI-only. Chrome and clean-machine validation are still needed before a stable full-feature release.
-
-## Feedback and contributions
-
-Report problems through [GitHub Issues](https://github.com/opsorart/WhereFrom/issues). Include your Windows version, how the file was obtained, the command you ran, and the output. Do not upload private files or unredacted URLs.
-
-See [ENGINEERING.md](ENGINEERING.md) for the engineering design and [release validation](docs/release-validation.md) for the release checklist.
-
-## License
-
-[MIT](LICENSE).
+Licensed under [MIT](LICENSE).
