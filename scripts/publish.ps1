@@ -66,7 +66,7 @@ Copy-Item -LiteralPath (Join-Path $runtimePath 'LICENSE.TXT') -Destination (Join
 Copy-Item -LiteralPath (Join-Path $runtimePath 'THIRD-PARTY-NOTICES.TXT') -Destination (Join-Path $package 'DOTNET-THIRD-PARTY-NOTICES.txt')
 Copy-Item -LiteralPath (Join-Path $repo 'scripts/smoke-test.ps1') -Destination $package
 
-$zip = Join-Path $artifacts 'WhereFrom-preview-win-x64.zip'
+$zip = Join-Path $artifacts 'WhereFrom-0.2.0-win-x64.zip'
 Compress-Archive -LiteralPath $package -DestinationPath $zip -Force
 $hash = (Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash.ToLowerInvariant()
 [IO.File]::WriteAllText((Join-Path $artifacts 'SHA256SUMS.txt'),

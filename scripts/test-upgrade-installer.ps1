@@ -19,14 +19,14 @@ if ([Microsoft.Win32.Registry]::CurrentUser.OpenSubKey($testRoot)) {
     throw 'Test registry key already exists; refusing to overwrite it.'
 }
 New-Item -ItemType Directory -Path $legacyPackage, $legacyOutput, $newOutput | Out-Null
-Expand-Archive -LiteralPath (Join-Path $repo 'artifacts/WhereFrom-preview-win-x64.zip') -DestinationPath $source
+Expand-Archive -LiteralPath (Join-Path $repo 'artifacts/WhereFrom-0.2.0-win-x64.zip') -DestinationPath $source
 $currentPackage = Join-Path $source 'WhereFrom-win-x64'
 Get-ChildItem -LiteralPath $currentPackage -File |
     Where-Object { $_.Name -notin @('BROWSER-SETUP.txt', 'register-native-host.ps1', 'unregister-native-host.ps1') } |
     Copy-Item -Destination $legacyPackage
 
-# The v0.1.1 CLI-only installer is the local main baseline for this branch.
-$legacyScript = & git -C $repo show 'b2a3628:installer/WhereFrom.iss'
+# The published v0.1.1 tag contains the CLI-only installer used as the upgrade baseline.
+$legacyScript = & git -C $repo show 'v0.1.1:installer/WhereFrom.iss'
 if ($LASTEXITCODE -ne 0 -or -not $legacyScript) { throw 'v0.1.1 installer source is unavailable.' }
 $legacyPath = Join-Path $work 'WhereFrom-v0.1.1.iss'
 [IO.File]::WriteAllLines($legacyPath, [string[]]$legacyScript, [Text.UTF8Encoding]::new($false))
@@ -34,7 +34,7 @@ $legacyPath = Join-Path $work 'WhereFrom-v0.1.1.iss'
 if ($LASTEXITCODE -ne 0) { throw 'Legacy installer compilation failed.' }
 $extensionId = & (Join-Path $repo 'scripts/get-extension-id.ps1') -Manifest (Join-Path $currentPackage 'extension/manifest.json')
 & $Compiler '/DInstallerTest' "/DPackageDir=$currentPackage" "/DOutputDir=$newOutput" "/DExtensionId=$extensionId" (Join-Path $repo 'installer/WhereFrom.iss') | Out-Null
-if ($LASTEXITCODE -ne 0) { throw 'Preview installer compilation failed.' }
+if ($LASTEXITCODE -ne 0) { throw 'v0.2.0 installer compilation failed.' }
 
 function Run-Setup([string]$Path, [bool]$First) {
     $arguments = @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART')

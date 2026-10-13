@@ -4,9 +4,9 @@
 
 [简体中文](README.zh-CN.md) · [Engineering notes](ENGINEERING.md) · [Documentation](docs/README.md)
 
-WhereFrom shows the available download URL, referring page, and Windows zone. It reads the file's `Zone.Identifier` stream and, in the current source-built preview, can also consult a local record of new Chrome/Edge downloads. It does not reconstruct missing history or decide whether a file is safe. Queries do not alter the inspected file or remove Mark of the Web.
+WhereFrom shows the available download URL, referring page, and Windows zone. It reads the file's `Zone.Identifier` stream and can also consult a local record of new Chrome/Edge downloads. It does not reconstruct missing history or decide whether a file is safe. Queries do not alter the inspected file or remove Mark of the Web.
 
-The published **v0.1.1** package is CLI-only. The **source-built preview** adds a GUI, browser capture, and an Explorer file menu; it is not a new public release.
+**v0.2.0** adds a GUI, browser capture, and an Explorer file menu. The previous **v0.1.1** package is CLI-only.
 
 ```powershell
 wherefrom "C:\Users\YourName\Downloads\example.zip"
@@ -27,7 +27,7 @@ Windows Zone
 
 ## Current capabilities
 
-| Capability | Published v0.1.1 | Source-built preview |
+| Capability | Previous v0.1.1 | v0.2.0 |
 | --- | --- | --- |
 | Inspect `Zone.Identifier` | CLI text and schema v1 JSON | CLI and GUI |
 | Scan a directory | First-level `scan` | `scan` plus bounded `audit` |
@@ -35,26 +35,26 @@ Windows Zone
 | Browser evidence | — | New completed Chrome/Edge downloads via extension and Native Host |
 | Local records | — | SQLite under `%LOCALAPPDATA%\WhereFrom` |
 | File copies and moves | — | Same-content historical records shown only as possible associations |
-| Installation | Per-user installer or self-contained ZIP | Preview installer or ZIP; GUI and removable Explorer menu |
+| Installation | Per-user installer or self-contained ZIP | Per-user installer or ZIP; GUI and removable Explorer menu |
 
 Chrome has not been manually tested on the current development machine. The [release checklist](docs/release-validation.md) lists the remaining clean-machine checks.
 
-## Install the preview
+## Install v0.2.0
 
-On Windows x64, build the current preview from the repository root:
+Download the installer or ZIP from the [v0.2.0 release](https://github.com/WhereFromProject/WhereFrom/releases/tag/v0.2.0), or build on Windows x64 from the repository root:
 
 ```powershell
 ./scripts/publish.ps1
 ./scripts/build-installer.ps1
 ```
 
-The second command requires [Inno Setup 6](https://jrsoftware.org/isinfo.php). Outputs are `artifacts/WhereFrom-preview-win-x64.zip`, `artifacts/WhereFrom-preview-win-x64-Setup.exe`, and `artifacts/SHA256SUMS.txt`. These packages are unsigned. Their names do not imply a GitHub Release has been published.
+The second command requires [Inno Setup 6](https://jrsoftware.org/isinfo.php). Outputs are `artifacts/WhereFrom-0.2.0-win-x64.zip`, `artifacts/WhereFrom-0.2.0-win-x64-Setup.exe`, and `artifacts/SHA256SUMS.txt`. These packages are unsigned.
 
 The installer runs for the current user without elevation, adds the CLI to the user PATH, registers the Native Host, and installs the GUI and the single-file Explorer menu. Open a new terminal after installation. Reinstalling keeps the existing installation directory; to change it, uninstall first. Uninstall removes installer-owned PATH, Host, and menu registrations while leaving `%LOCALAPPDATA%\WhereFrom\wherefrom.db` in place. The ZIP changes no system registrations by itself and includes registration/removal scripts. Both formats bundle .NET and need a writable user temporary directory.
 
 Load the extension manually in Chrome or Edge Developer mode using [the browser setup guide](docs/browser-setup.txt), also included in the package as `BROWSER-SETUP.txt`. It records only new completed downloads, not past history; failed, canceled, and incognito downloads are not saved. Browser extension removal is manual.
 
-The published v0.1.1 installer and ZIP remain valid for users who only need the original CLI.
+The v0.1.1 installer and ZIP remain available for users who only need the original CLI.
 
 ## Use WhereFrom
 
@@ -119,9 +119,9 @@ dotnet restore WhereFrom.sln
 dotnet test WhereFrom.sln -c Release -p:Platform=x64
 node --test extension/test/worker.test.js
 ./scripts/publish.ps1
-./scripts/check-repository-hygiene.ps1 -Package artifacts/WhereFrom-preview-win-x64.zip
+./scripts/check-repository-hygiene.ps1 -Package artifacts/WhereFrom-0.2.0-win-x64.zip
 ```
 
-The [Windows workflow](.github/workflows/windows.yml) also builds and tests the installer. See [ENGINEERING.md](ENGINEERING.md) for architecture and maintenance rules, and [docs/README.md](docs/README.md) for user and release documentation. Open an [issue](https://github.com/opsorart/WhereFrom/issues) with a reproducible example and redacted output.
+The [Windows workflow](.github/workflows/windows.yml) also builds and tests the installer. See [ENGINEERING.md](ENGINEERING.md) for architecture and maintenance rules, and [docs/README.md](docs/README.md) for user and release documentation. Open an [issue](https://github.com/WhereFromProject/WhereFrom/issues) with a reproducible example and redacted output.
 
 Licensed under [MIT](LICENSE).

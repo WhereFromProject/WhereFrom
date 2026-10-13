@@ -1,6 +1,6 @@
 # WhereFrom 工程设计
 
-> 面向贡献者的已实现架构、证据规则与演进边界。已公开的 v0.1.1 是 CLI；当前源码为包含 GUI 和浏览器捕获的预览版。
+> 面向贡献者的已实现架构、证据规则与演进边界。v0.1.1 仅包含 CLI；v0.2.0 增加 GUI 和浏览器捕获。
 
 [中文使用说明](README.zh-CN.md) · [English README](README.md) · [文档索引](docs/README.md)
 
@@ -91,7 +91,7 @@ dotnet restore WhereFrom.sln
 dotnet test WhereFrom.sln -c Release -p:Platform=x64
 node --test extension/test/worker.test.js
 ./scripts/publish.ps1
-./scripts/check-repository-hygiene.ps1 -Package artifacts/WhereFrom-preview-win-x64.zip
+./scripts/check-repository-hygiene.ps1 -Package artifacts/WhereFrom-0.2.0-win-x64.zip
 ./scripts/build-installer.ps1
 ```
 
@@ -105,7 +105,7 @@ node --test extension/test/worker.test.js
 - 保持 Core 平台无关；Windows API 放在 Windows 项目。新增证据源复用统一查询，并明确何时采集、保存哪些字段及其隐私影响。
 - 新命令或 JSON 字段要同步更新中英文 README、自动化测试和发布检查。改变现有字段含义或退出码须单独评估兼容性。
 - 用临时 fixture 验证读取与冲突边界，再做必要的真实 Windows 场景验收；不要把用户私人路径、URL、浏览器配置或阶段过程日志提交到交付分支。
-- 后续可按真实需求改进移动关联、最近记录与搜索、安装体验和更多平台；这些方向不是已承诺的版本或日期。Brave、旧历史导入、云同步和 AI 分类不属于当前预览版。
+- 后续可按真实需求改进移动关联、最近记录与搜索、安装体验和更多平台；这些方向不是已承诺的版本或日期。Brave、旧历史导入、云同步和 AI 分类不属于 v0.2.0。
 
 ## 参考入口
 
