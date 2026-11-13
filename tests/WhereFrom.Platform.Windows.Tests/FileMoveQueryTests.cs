@@ -2,6 +2,7 @@ using System.Text.Json;
 using Microsoft.Data.Sqlite;
 using WhereFrom.Cli;
 using WhereFrom.Core;
+using WhereFrom.Platform.Windows;
 using WhereFrom.Storage;
 using Xunit;
 
@@ -9,6 +10,45 @@ namespace WhereFrom.Platform.Windows.Tests;
 
 public sealed class FileMoveQueryTests
 {
+    [Fact]
+    public void HistorySearchStillFindsMovedDeletedAndReplacedDownloads()
+    {
+        using var fixture = new Fixture();
+        fixture.Save();
+        var otherPath = Path.Combine(fixture.DirectoryPath, "第二份.txt");
+        File.WriteAllText(otherPath, "Other content");
+        var later = DateTimeOffset.UtcNow.AddMinutes(1);
+        Assert.True(fixture.Store.Save(new BrowserDownload("chrome", "43", otherPath,
+            later, later, "https://example.com/second", null, null, false)));
+
+        var entries = fixture.Store.ReadHistory(new("EXAMPLE.com")).Entries;
+        Assert.Equal(["第二份.txt", "原始 文件.txt"], entries.Select(entry => entry.FileName));
+        Assert.Equal(entries[0], Assert.Single(fixture.Store.ReadHistory(new("example.com", "chrome")).Entries));
+        Assert.Equal(entries[0], Assert.Single(fixture.Store.ReadHistory(new("example.com", Since: later)).Entries));
+        Assert.Empty(fixture.Store.ReadHistory(new("example.com", "edge", later)).Entries);
+        var original = Assert.Single(fixture.Store.ReadHistory(new("始 文")).Entries).Download;
+        var query = new UnifiedProvenanceQuery(new WindowsZoneProvider(), fixture.Store);
+        Assert.Equal(OriginalDownloadPathStatus.DirectMatch, query.CheckOriginalDownloadPath(original));
+
+        var moved = Path.Combine(fixture.DirectoryPath, "moved.txt");
+        File.Move(fixture.OriginalPath, moved);
+        Assert.Equal(OriginalDownloadPathStatus.Unavailable, query.CheckOriginalDownloadPath(original));
+        var movedReport = query.Inspect(moved);
+        Assert.Null(movedReport.SourceUrl);
+        Assert.Single(movedReport.PossibleBrowserDownloads);
+
+        File.Delete(otherPath);
+        Assert.Equal(OriginalDownloadPathStatus.Unavailable, query.CheckOriginalDownloadPath(entries[0].Download));
+        File.WriteAllText(fixture.OriginalPath, new string('X', (int)original.FileSize));
+        File.SetLastWriteTimeUtc(fixture.OriginalPath, original.FileLastWriteUtc.UtcDateTime);
+        Assert.Equal(OriginalDownloadPathStatus.DifferentFile, query.CheckOriginalDownloadPath(original));
+        var replacement = query.Inspect(fixture.OriginalPath);
+        Assert.Null(replacement.SourceUrl);
+        Assert.Equal(1, replacement.HistoricalBrowserRecords);
+        Assert.Empty(replacement.PossibleBrowserDownloads);
+        Assert.Equal(entries, fixture.Store.ReadHistory(new("example.com")).Entries);
+    }
+
     [Fact]
     public void MovedAndCopiedContentIsOnlyAPossibleAssociation()
     {
@@ -107,7 +147,7 @@ public sealed class FileMoveQueryTests
             AppContext.BaseDirectory, "fixtures", Guid.NewGuid().ToString("N"));
         public string OriginalPath => Path.Combine(DirectoryPath, "原始 文件.txt");
         public string DatabasePath => Path.Combine(DirectoryPath, "records.db");
-        private DownloadStore Store => new(DatabasePath);
+        public DownloadStore Store => new(DatabasePath);
 
         public Fixture()
         {

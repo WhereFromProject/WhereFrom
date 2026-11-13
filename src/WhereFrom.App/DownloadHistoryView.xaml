@@ -1,0 +1,90 @@
+<UserControl x:Class="WhereFrom.App.DownloadHistoryView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid Margin="12">
+        <Grid x:Name="ListPanel">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <StackPanel Margin="0,0,0,10">
+                <DockPanel Margin="0,0,0,8">
+                    <Label Content="搜索 (_S)" Target="{Binding ElementName=SearchBox}" VerticalAlignment="Center"/>
+                    <Button Content="刷新" DockPanel.Dock="Right" Click="Refresh_Click" Margin="8,0,0,0" Padding="12,5"
+                            KeyboardNavigation.TabIndex="3"/>
+                    <TextBox x:Name="SearchBox" AutomationProperties.Name="按文件名或来源域名搜索"
+                             TextChanged="SearchBox_TextChanged" PreviewKeyDown="SearchBox_PreviewKeyDown"
+                             Padding="6" VerticalContentAlignment="Center" KeyboardNavigation.TabIndex="0"/>
+                </DockPanel>
+                <WrapPanel>
+                    <Label Content="浏览器 (_B)" Target="{Binding ElementName=BrowserFilter}"/>
+                    <ComboBox x:Name="BrowserFilter" AutomationProperties.Name="浏览器筛选"
+                              SelectedIndex="0" MinWidth="90" Margin="0,0,12,0"
+                              SelectionChanged="Filter_SelectionChanged" KeyboardNavigation.TabIndex="1">
+                        <ComboBoxItem Content="全部"/>
+                        <ComboBoxItem Content="Chrome" Tag="chrome"/>
+                        <ComboBoxItem Content="Edge" Tag="edge"/>
+                    </ComboBox>
+                    <Label Content="下载时间 (_T)" Target="{Binding ElementName=TimeFilter}"/>
+                    <ComboBox x:Name="TimeFilter" AutomationProperties.Name="下载时间筛选"
+                              SelectedIndex="0" MinWidth="100"
+                              SelectionChanged="Filter_SelectionChanged" KeyboardNavigation.TabIndex="2">
+                        <ComboBoxItem Content="不限"/>
+                        <ComboBoxItem Content="今天" Tag="1"/>
+                        <ComboBoxItem Content="最近 7 天" Tag="7"/>
+                        <ComboBoxItem Content="最近 30 天" Tag="30"/>
+                    </ComboBox>
+                </WrapPanel>
+            </StackPanel>
+            <ListView Grid.Row="1" x:Name="HistoryList" AutomationProperties.Name="下载记录"
+                      PreviewKeyDown="HistoryList_PreviewKeyDown"
+                      KeyboardNavigation.TabIndex="4"
+                      ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                      VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
+                <ListView.View>
+                    <GridView AllowsColumnReorder="False">
+                        <GridViewColumn Header="文件名" Width="172" DisplayMemberBinding="{Binding FileName}"/>
+                        <GridViewColumn Header="来源域名" Width="145" DisplayMemberBinding="{Binding Domain}"/>
+                        <GridViewColumn Header="浏览器" Width="65" DisplayMemberBinding="{Binding Browser}"/>
+                        <GridViewColumn Header="下载时间" Width="135" DisplayMemberBinding="{Binding Completed}"/>
+                    </GridView>
+                </ListView.View>
+                <ListView.ItemContainerStyle>
+                    <Style TargetType="ListViewItem">
+                        <Setter Property="AutomationProperties.Name" Value="{Binding AccessibleName}"/>
+                        <EventSetter Event="PreviewMouseLeftButtonUp" Handler="HistoryRow_PreviewMouseLeftButtonUp"/>
+                    </Style>
+                </ListView.ItemContainerStyle>
+            </ListView>
+            <DockPanel Grid.Row="2" Margin="0,10,0,0">
+                <Button x:Name="LoadMoreButton" Content="加载更多" DockPanel.Dock="Right"
+                        Padding="12,5" Click="LoadMore_Click" Visibility="Collapsed"/>
+                <Button x:Name="FileTabButton" Content="查文件" DockPanel.Dock="Right"
+                        Padding="12,5" Click="FileTab_Click" Visibility="Collapsed"/>
+                <TextBlock x:Name="ListStatus" TextWrapping="Wrap" VerticalAlignment="Center"
+                           AutomationProperties.LiveSetting="Polite"/>
+            </DockPanel>
+        </Grid>
+        <Grid x:Name="DetailPanel" Visibility="Collapsed">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <Button x:Name="BackButton" Content="返回下载记录" Click="Back_Click"
+                    HorizontalAlignment="Left" Padding="10,5" Margin="0,0,0,10"/>
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                    <TextBlock x:Name="DetailName" FontSize="22" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                    <TextBlock x:Name="DetailSummary" Margin="0,6,0,12" TextWrapping="Wrap"/>
+                    <TextBlock x:Name="DetailPathStatus" Margin="0,0,0,12" TextWrapping="Wrap"
+                               AutomationProperties.LiveSetting="Polite"/>
+                    <Expander x:Name="DetailFields" Header="原路径与网址">
+                        <TextBox x:Name="DetailValues" IsReadOnly="True" TextWrapping="Wrap"
+                                 AutomationProperties.Name="下载记录的原路径和网址" Padding="6"/>
+                    </Expander>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+    </Grid>
+</UserControl>

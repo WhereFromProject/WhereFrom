@@ -28,6 +28,10 @@ public sealed record StoredDownload(
 
 public static class ProvenanceUrlSanitizer
 {
+    public static string? GetHttpDomain(string? url) =>
+        Uri.TryCreate(url, UriKind.Absolute, out var uri)
+        && uri.Scheme is "http" or "https" && uri.Host.Length > 0 ? uri.IdnHost : null;
+
     public static string? Sanitize(string? value)
     {
         if (string.IsNullOrEmpty(value) || value.Length > 8192

@@ -65,7 +65,9 @@ wherefrom scan "$HOME\Downloads"
 wherefrom audit "$HOME\Downloads" --limit 100
 ```
 
-The GUI can select or accept a single dropped file, or start with one file path as an argument. It shows Windows and browser evidence separately. Copying a URL or opening a webpage requires a click. The Explorer entry opens the selected file in this GUI.
+Use **查文件** (Inspect file) to pick or drop a file. A single startup argument or the installed Explorer menu also opens the selected file. The details show the file name, source domain, and recorded download time first, followed by separate Windows and browser evidence. Expand the details to see paths and full URLs. Open buttons show the destination domain. Raw Windows metadata can contain sensitive parameters.
+
+Use **下载记录** (Download history) to browse locally captured downloads, newest first. Search by a filename fragment or source domain, and narrow results by browser and download time. Click a row or press Enter to open it. The record remains available after the original file moves, is deleted, or is replaced, with the current status of its original path shown separately.
 
 | Command | Result |
 | --- | --- |

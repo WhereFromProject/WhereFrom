@@ -7,6 +7,45 @@ namespace WhereFrom.Storage.Tests;
 public sealed class DownloadStoreTests
 {
     [Fact]
+    public void HistoryPagesUseCompletionTimeAndStableTieOrder()
+    {
+        var directory = Directory.CreateTempSubdirectory("wherefrom-history-");
+        try
+        {
+            var file = Path.Combine(directory.FullName, "sample%_中.txt");
+            File.WriteAllText(file, "test");
+            var store = new DownloadStore(Path.Combine(directory.FullName, "records.db"));
+            Assert.Empty(store.ReadHistory(new("")).Entries);
+            Assert.False(File.Exists(store.DatabasePath));
+            var completed = DateTimeOffset.UtcNow;
+            for (var id = 0; id < 56; id++)
+            {
+                Assert.True(store.Save(new BrowserDownload("edge", id.ToString(), file, completed, completed,
+                    $"https://fixture.example/{id}", null, null, false)));
+            }
+            Assert.True(store.Save(new BrowserDownload("chrome", "older", file, completed.AddDays(-1),
+                completed.AddDays(-1), "https://fixture.example/older", "https://cdn.example/file", null, false)));
+
+            var first = store.ReadHistory(new(" %_中 "));
+            var next = store.ReadHistory(new(" %_中 "), first.Next);
+            Assert.NotNull(first.Next);
+            Assert.Null(next.Next);
+            Assert.Equal(50, first.Entries.Count);
+            Assert.Equal(7, next.Entries.Count);
+            Assert.Equal(Enumerable.Range(0, 56).Reverse().Select(id => $"https://fixture.example/{id}")
+                .Append("https://fixture.example/older"),
+                first.Entries.Concat(next.Entries).Select(entry => entry.Download.InitialUrl));
+            Assert.Empty(store.ReadHistory(new("older")).Entries); // URL paths are outside the search fields.
+            Assert.Equal("cdn.example", Assert.Single(store.ReadHistory(new("fixture.example", "chrome")).Entries).SourceDomain);
+            Assert.Single(store.ReadHistory(new("cdn.example")).Entries);
+        }
+        finally
+        {
+            directory.Delete(recursive: true);
+        }
+    }
+
+    [Fact]
     public void SaveIsPrivatePersistentAndIdempotent()
     {
         var directory = Path.Combine(Path.GetTempPath(), "wherefrom-store-" + Guid.NewGuid().ToString("N"));
@@ -72,6 +111,7 @@ public sealed class DownloadStoreTests
             var database = Path.Combine(directory, "records.db");
             File.WriteAllText(database, "not a database");
             Assert.ThrowsAny<Exception>(() => new DownloadStore(database).FindByPath("C:\\sample.txt"));
+            Assert.Throws<Microsoft.Data.Sqlite.SqliteException>(() => new DownloadStore(database).ReadHistory(new("")));
         }
         finally
         {

@@ -17,9 +17,12 @@ public sealed class WindowsZoneProvider : IProvenanceProvider
         this.supportsNamedStreams = supportsNamedStreams;
     }
 
-    public ProvenanceResult Inspect(string path)
+    public ProvenanceResult Inspect(string path) => Inspect(path, out _);
+
+    internal ProvenanceResult Inspect(string path, out string? rawMetadata)
     {
         var read = ZoneIdentifierReader.Read(path);
+        rawMetadata = read.Content;
         if (read.Status == ZoneReadStatus.Found)
         {
             return ZoneIdentifierParser.Parse(path, read.Content!);

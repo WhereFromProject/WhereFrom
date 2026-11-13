@@ -34,7 +34,7 @@ WhereFrom.App ──┼──► UnifiedProvenanceQuery
 | `WhereFrom.Storage` | 清洗后浏览器记录的 SQLite 存储、schema 升级和有上限的文件哈希 |
 | `WhereFrom.NativeHost` | 验证扩展 ID、消息版本与长度后保存已完成的新下载；不常驻 |
 | `WhereFrom.Cli` | 稳定的文本、JSON、退出码与诊断命令；不复制证据合并逻辑 |
-| `WhereFrom.App` | WPF 单文件窗口，复用统一查询；选择、拖入、复制及主动打开网址 |
+| `WhereFrom.App` | WPF 单文件详情和下载记录搜索，复用统一查询与本地 SQLite |
 | `extension/` | Chrome／Edge Manifest V3 扩展；只发送完成的普通下载，有限次数重试 |
 
 `WhereFrom.Core` 必须能在不加载 Windows UI 的测试环境中运行。Windows 平台类型不得泄漏进它的公共模型。GUI 和 CLI 都调用统一查询，不各自发明来源归属规则。
@@ -71,7 +71,9 @@ wherefrom data clear --yes
 
 单文件 JSON 保持 `schemaVersion: 1`、`path`、`hasProvenance`、`zone`、`sourceUrl`、`referrerUrl` 的既有语义；新增的完整度、冲突和证据字段为兼容性扩展。缺失网址为 `null`。正常查询即使未知也返回 JSON，参数与读取错误不输出 JSON。标准错误不混入 JSON。退出码的详细边界由命令测试固定，概览见 README。
 
-`scan` 保留原有的 Windows 元数据行为；`audit` 用统一查询，但只看目录第一层，默认最多检查 100 个文件，最大 1000，并跳过重解析点。GUI 只处理一个文件，展示不同证据来源及不确定性。仅用户主动点击时才打开通过 HTTP/HTTPS 校验的来源页面。
+`scan` 保留原有的 Windows 元数据行为；`audit` 用统一查询，但只看目录第一层，默认最多检查 100 个文件，最大 1000，并跳过重解析点。GUI 的「查文件」分组显示单文件证据，完整路径、网址和原始元数据按需展开。打开按钮显示目标域名，并在用户点击后打开通过 HTTP/HTTPS 校验的网址。
+
+「下载记录」在后台以只读连接按下载时间和记录 ID 分页，兼容 v1 与 v2。搜索范围包括文件名和初始或最终网址的域名，支持浏览器与本地下载日期筛选。记录详情来自保存的历史数据，原路径状态由统一查询检查；移动、删除或替换文件后仍可查看当时的记录。
 
 ## 5. 隐私与可靠性
 

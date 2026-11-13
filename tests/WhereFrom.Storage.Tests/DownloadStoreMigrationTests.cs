@@ -63,6 +63,7 @@ public sealed class DownloadStoreMigrationTests
             var legacy = Assert.Single(store.FindByPath(file));
             Assert.Null(legacy.FileSha256);
             Assert.Equal("https://example.com/old", legacy.FinalUrl);
+            Assert.Equal(legacy, Assert.Single(store.ReadHistory(new("example.com")).Entries).Download);
             using (var connection = new SqliteConnection($"Data Source={database};Pooling=False"))
             {
                 connection.Open();

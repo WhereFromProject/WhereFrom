@@ -46,7 +46,7 @@ public sealed class DownloadStore(string databasePath)
         var originalLastWrite = file.LastWriteTimeUtc;
         var sha256 = TryComputeSha256(path);
 
-        using var connection = Open(create: true);
+        using var connection = Open(SqliteOpenMode.ReadWriteCreate);
         using var command = connection.CreateCommand();
         command.CommandText = """
             INSERT INTO downloads
@@ -81,11 +81,11 @@ public sealed class DownloadStore(string databasePath)
 
     public IReadOnlyList<StoredDownload> FindByPath(string path)
     {
-        if (!File.Exists(DatabasePath))
+        if (!DatabaseExists())
         {
             return [];
         }
-        using var connection = Open(create: false);
+        using var connection = Open(SqliteOpenMode.ReadOnly);
         using var command = connection.CreateCommand();
         command.CommandText = DatabaseVersion(connection) == 1
             ? """
@@ -103,10 +103,64 @@ public sealed class DownloadStore(string databasePath)
         return ReadDownloads(command);
     }
 
+    public DownloadHistoryPage ReadHistory(
+        DownloadHistoryFilter filter, DownloadHistoryCursor? after = null, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        if (!DatabaseExists())
+            return new([], null);
+
+        const int pageSize = 50;
+        using var connection = Open(SqliteOpenMode.ReadOnly);
+        var search = filter.Search.Trim();
+        connection.CreateFunction<string, string?, string?, bool>("matches_history", (path, initialUrl, finalUrl) =>
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return Path.GetFileName(path).Contains(search, StringComparison.OrdinalIgnoreCase)
+                || ProvenanceUrlSanitizer.GetHttpDomain(initialUrl)?.Contains(search, StringComparison.OrdinalIgnoreCase) == true
+                || ProvenanceUrlSanitizer.GetHttpDomain(finalUrl)?.Contains(search, StringComparison.OrdinalIgnoreCase) == true;
+        });
+        using var command = connection.CreateCommand();
+        var hashColumn = DatabaseVersion(connection) == 1 ? "NULL" : "file_sha256";
+        var cursorCondition = after is null ? "1" : "(completed_utc, id) < ($completed, $id)";
+        var dateCondition = filter.Since is null ? "1" : "completed_utc >= $since";
+        command.CommandText = $"""
+            SELECT browser, path, started_utc, completed_utc, file_size,
+                   file_last_write_utc, initial_url, final_url, referrer_url, {hashColumn}, id
+            FROM downloads
+            WHERE {cursorCondition}
+              AND ($browser IS NULL OR browser = $browser)
+              AND {dateCondition}
+              AND ($empty_search OR matches_history(path, initial_url, final_url))
+            ORDER BY completed_utc DESC, id DESC LIMIT {pageSize + 1};
+            """;
+        command.Parameters.AddWithValue("$completed", (object?)after?.CompletedUtc ?? DBNull.Value);
+        command.Parameters.AddWithValue("$id", (object?)after?.Id ?? DBNull.Value);
+        command.Parameters.AddWithValue("$browser", (object?)filter.Browser ?? DBNull.Value);
+        command.Parameters.AddWithValue("$since", (object?)filter.Since?.ToUniversalTime().ToString("O") ?? DBNull.Value);
+        command.Parameters.AddWithValue("$empty_search", search.Length == 0);
+
+        var entries = new List<DownloadHistoryEntry>(pageSize);
+        DownloadHistoryCursor? cursor = null;
+        using var reader = command.ExecuteReader();
+        while (reader.Read())
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (entries.Count == pageSize)
+                return new(entries, cursor);
+
+            var id = reader.GetInt64(10);
+            entries.Add(new(id, ReadDownload(reader)));
+            cursor = new(reader.GetString(3), id);
+        }
+        cancellationToken.ThrowIfCancellationRequested();
+        return new(entries, null);
+    }
+
     public bool HasHashedRecord(long size)
     {
-        if (!File.Exists(DatabasePath)) return false;
-        using var connection = Open(create: false);
+        if (!DatabaseExists()) return false;
+        using var connection = Open(SqliteOpenMode.ReadOnly);
         if (DatabaseVersion(connection) == 1) return false;
         using var command = connection.CreateCommand();
         command.CommandText = """
@@ -118,11 +172,11 @@ public sealed class DownloadStore(string databasePath)
     }
     public IReadOnlyList<StoredDownload> FindByContent(string path, long size, string sha256)
     {
-        if (!File.Exists(DatabasePath))
+        if (!DatabaseExists())
         {
             return [];
         }
-        using var connection = Open(create: false);
+        using var connection = Open(SqliteOpenMode.ReadOnly);
         if (DatabaseVersion(connection) == 1) return [];
         using var command = connection.CreateCommand();
         command.CommandText = """
@@ -143,18 +197,30 @@ public sealed class DownloadStore(string databasePath)
         using var reader = command.ExecuteReader();
         var results = new List<StoredDownload>();
         while (reader.Read())
-        {
-            results.Add(new StoredDownload(
-                reader.GetString(0), reader.GetString(1),
-                DateTimeOffset.Parse(reader.GetString(2)),
-                DateTimeOffset.Parse(reader.GetString(3)),
-                reader.GetInt64(4), DateTimeOffset.Parse(reader.GetString(5)),
-                reader.IsDBNull(6) ? null : reader.GetString(6),
-                reader.IsDBNull(7) ? null : reader.GetString(7),
-                reader.IsDBNull(8) ? null : reader.GetString(8),
-                reader.IsDBNull(9) ? null : reader.GetString(9)));
-        }
+            results.Add(ReadDownload(reader));
         return results;
+    }
+
+    private static StoredDownload ReadDownload(SqliteDataReader reader) => new(
+        reader.GetString(0), reader.GetString(1),
+        DateTimeOffset.Parse(reader.GetString(2)), DateTimeOffset.Parse(reader.GetString(3)),
+        reader.GetInt64(4), DateTimeOffset.Parse(reader.GetString(5)),
+        reader.IsDBNull(6) ? null : reader.GetString(6),
+        reader.IsDBNull(7) ? null : reader.GetString(7),
+        reader.IsDBNull(8) ? null : reader.GetString(8),
+        reader.IsDBNull(9) ? null : reader.GetString(9));
+
+    private bool DatabaseExists()
+    {
+        try
+        {
+            File.GetAttributes(DatabasePath);
+            return true;
+        }
+        catch (Exception error) when (error is FileNotFoundException or DirectoryNotFoundException)
+        {
+            return false;
+        }
     }
 
     public int Clear()
@@ -163,7 +229,7 @@ public sealed class DownloadStore(string databasePath)
         {
             return 0;
         }
-        using var connection = Open(create: false);
+        using var connection = Open(SqliteOpenMode.ReadWrite);
         using var command = connection.CreateCommand();
         command.CommandText = "PRAGMA secure_delete = ON; DELETE FROM downloads;";
         var deleted = command.ExecuteNonQuery();
@@ -206,8 +272,9 @@ public sealed class DownloadStore(string databasePath)
         }
     }
 
-    private SqliteConnection Open(bool create)
+    private SqliteConnection Open(SqliteOpenMode mode)
     {
+        var create = mode == SqliteOpenMode.ReadWriteCreate;
         if (create)
         {
             Directory.CreateDirectory(Path.GetDirectoryName(DatabasePath)!);
@@ -215,7 +282,7 @@ public sealed class DownloadStore(string databasePath)
         var builder = new SqliteConnectionStringBuilder
         {
             DataSource = DatabasePath,
-            Mode = create ? SqliteOpenMode.ReadWriteCreate : SqliteOpenMode.ReadWrite,
+            Mode = mode,
             Pooling = false,
             DefaultTimeout = 5
         };
@@ -248,6 +315,7 @@ public sealed class DownloadStore(string databasePath)
                     );
                     CREATE INDEX downloads_by_path ON downloads(path_key);
                     CREATE INDEX downloads_by_hash ON downloads(file_size, file_sha256);
+                    CREATE INDEX downloads_by_completion ON downloads(completed_utc, id);
                     PRAGMA user_version = 2;
                     """;
                 command.ExecuteNonQuery();
@@ -265,6 +333,7 @@ public sealed class DownloadStore(string databasePath)
                 command.Transaction = transaction;
                 command.CommandText = (hasHashColumn ? "" : "ALTER TABLE downloads ADD COLUMN file_sha256 TEXT;")
                     + "CREATE INDEX IF NOT EXISTS downloads_by_hash ON downloads(file_size, file_sha256);"
+                    + "CREATE INDEX IF NOT EXISTS downloads_by_completion ON downloads(completed_utc, id);"
                     + "PRAGMA user_version = 2;";
                 command.ExecuteNonQuery();
                 transaction.Commit();
