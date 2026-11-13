@@ -6,7 +6,7 @@
 
 WhereFrom 显示可用的下载地址、引用页面和 Windows 区域信息。它读取文件的 `Zone.Identifier` 数据流，也能查询本机记录的 Chrome／Edge 新下载。它不会补造缺失的历史，也不判断文件是否安全。查询不修改被检查文件或解除 Mark of the Web。
 
-**v0.2.0** 增加了 GUI、浏览器捕获和资源管理器文件右键入口。此前的 **v0.1.1** 包仅包含 CLI。
+**v0.3.0** 新增下载记录搜索并改版文件来源详情。可以按文件名或来源域名查找本地下载记录，也可以直接打开文件查看已有证据。
 
 ```powershell
 wherefrom "C:\Users\YourName\Downloads\example.zip"
@@ -27,34 +27,32 @@ Windows Zone
 
 ## 当前能力
 
-| 功能 | 旧版 v0.1.1 | v0.2.0 |
-| --- | --- | --- |
-| 查询 `Zone.Identifier` | CLI 文本与版本 1 JSON | CLI 和 GUI |
-| 扫描目录 | 第一层 `scan` | `scan` 与有数量上限的 `audit` |
-| 打开来源页面 | 显式调用 `open` | CLI 命令或主动点击 GUI 按钮 |
-| 浏览器证据 | — | 扩展与 Native Host 捕获 Chrome／Edge 此后的新下载 |
-| 本地记录 | — | `%LOCALAPPDATA%\WhereFrom` 下的 SQLite |
-| 文件移动与复制 | — | 内容相同的历史记录只标为“可能关联” |
-| 安装 | 当前用户安装器或自带运行时的 ZIP | 当前用户安装器或 ZIP；包含 GUI 和可卸载的右键入口 |
+| 功能 | WhereFrom v0.3.0 |
+| --- | --- |
+| 单文件查询 | 桌面选取、拖放、资源管理器右键或 CLI，支持版本 1 JSON |
+| 搜索下载记录 | 按文件名、来源域名、浏览器和下载时间查找已捕获的本地记录 |
+| 捕获新下载 | Chrome／Edge 扩展通过 Native Host 将已完成的下载保存到本地 SQLite |
+| 文件移动与复制 | 内容相同的历史记录标为「可能关联」 |
+| 扫描目录 | CLI 支持单层 `scan` 和有数量上限的 `audit` |
 
 当前开发机器没有完成 Chrome 实机验证。其余干净系统验收项见[发布检查清单](docs/release-validation.md)。
 
-## 安装 v0.2.0
+## 安装 v0.3.0
 
-从 [v0.2.0 发布页](https://github.com/WhereFromProject/WhereFrom/releases/tag/v0.2.0)下载安装器或 ZIP，也可在 Windows x64 的仓库根目录构建：
+从 [v0.3.0 发布页](https://github.com/WhereFromProject/WhereFrom/releases/tag/v0.3.0)下载安装器或 ZIP，也可在 Windows x64 的仓库根目录构建：
 
 ```powershell
 ./scripts/publish.ps1
 ./scripts/build-installer.ps1
 ```
 
-第二条命令需要 [Inno Setup 6](https://jrsoftware.org/isinfo.php)。生成物为 `artifacts/WhereFrom-0.2.0-win-x64.zip`、`artifacts/WhereFrom-0.2.0-win-x64-Setup.exe` 和 `artifacts/SHA256SUMS.txt`。这些安装包尚未签名。
+第二条命令需要 [Inno Setup 6](https://jrsoftware.org/isinfo.php)。生成物为 `artifacts/WhereFrom-0.3.0-win-x64.zip`、`artifacts/WhereFrom-0.3.0-win-x64-Setup.exe` 和 `artifacts/SHA256SUMS.txt`。这些安装包尚未签名。
 
 安装器无需提权，为当前用户安装 CLI、GUI 和单文件资源管理器右键入口，将 CLI 目录加入用户 PATH，并注册 Native Host。安装后请重新打开终端。重复安装沿用原目录；更换目录需先卸载。卸载时清理安装器拥有的 PATH、Host 和右键注册项，但保留 `%LOCALAPPDATA%\WhereFrom\wherefrom.db`。便携 ZIP 本身不修改系统注册项，包内提供 Host 注册与卸载脚本。两种形式都自带 .NET，并需要可写的用户临时目录。
 
 按照[浏览器安装说明](docs/browser-setup.txt)在 Chrome 或 Edge 的开发者模式下手动加载扩展；发布包内同样提供 `BROWSER-SETUP.txt`。扩展只记录此后完成的新下载，不导入旧历史；失败、取消和无痕下载不入库。扩展本身需在浏览器中手动移除。
 
-只需要原有 CLI 的用户仍可使用 v0.1.1 安装器和 ZIP。
+不装浏览器扩展，桌面端和 CLI 仍能读取 Windows 文件元数据。「下载记录」显示 WhereFrom 已在本地捕获的记录。
 
 ## 使用 WhereFrom
 
@@ -121,7 +119,7 @@ dotnet restore WhereFrom.sln
 dotnet test WhereFrom.sln -c Release -p:Platform=x64
 node --test extension/test/worker.test.js
 ./scripts/publish.ps1
-./scripts/check-repository-hygiene.ps1 -Package artifacts/WhereFrom-0.2.0-win-x64.zip
+./scripts/check-repository-hygiene.ps1 -Package artifacts/WhereFrom-0.3.0-win-x64.zip
 ```
 
 [Windows 工作流](.github/workflows/windows.yml)还会构建并测试安装器。架构和维护原则见 [ENGINEERING.md](ENGINEERING.md)，用户及发布文档见 [docs/README.md](docs/README.md)。如需报告问题，请在 [GitHub Issues](https://github.com/WhereFromProject/WhereFrom/issues) 提供可复现步骤和脱敏后的输出。

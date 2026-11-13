@@ -19,7 +19,7 @@
   #define Identity "WhereFrom"
   #define EnvironmentKey "Environment"
   #define StateKey "Software\WhereFrom\Installer"
-  #define SetupName "WhereFrom-0.2.0-win-x64-Setup"
+  #define SetupName "WhereFrom-0.3.0-win-x64-Setup"
   #define ChromeHostKey "Software\Google\Chrome\NativeMessagingHosts\org.wherefrom.provenance"
   #define EdgeHostKey "Software\Microsoft\Edge\NativeMessagingHosts\org.wherefrom.provenance"
   #define ExplorerKey "Software\Classes\*\shell\WhereFrom"
@@ -28,7 +28,7 @@
 [Setup]
 AppId={#Identity}
 AppName=WhereFrom
-AppVersion=0.2.0
+AppVersion=0.3.0
 AppPublisher=WhereFrom
 AppPublisherURL=https://github.com/WhereFromProject/WhereFrom
 DefaultDirName={localappdata}\Programs\WhereFrom

@@ -6,7 +6,7 @@
 
 WhereFrom shows the available download URL, referring page, and Windows zone. It reads the file's `Zone.Identifier` stream and can also consult a local record of new Chrome/Edge downloads. It does not reconstruct missing history or decide whether a file is safe. Queries do not alter the inspected file or remove Mark of the Web.
 
-**v0.2.0** adds a GUI, browser capture, and an Explorer file menu. The previous **v0.1.1** package is CLI-only.
+**v0.3.0** adds searchable download history and a redesigned file details view. Search locally captured downloads by filename or source domain, or open a file to inspect the available evidence.
 
 ```powershell
 wherefrom "C:\Users\YourName\Downloads\example.zip"
@@ -27,34 +27,32 @@ Windows Zone
 
 ## Current capabilities
 
-| Capability | Previous v0.1.1 | v0.2.0 |
-| --- | --- | --- |
-| Inspect `Zone.Identifier` | CLI text and schema v1 JSON | CLI and GUI |
-| Scan a directory | First-level `scan` | `scan` plus bounded `audit` |
-| Open a recorded page | Explicit `open` command | CLI or explicit GUI click |
-| Browser evidence | — | New completed Chrome/Edge downloads via extension and Native Host |
-| Local records | — | SQLite under `%LOCALAPPDATA%\WhereFrom` |
-| File copies and moves | — | Same-content historical records shown only as possible associations |
-| Installation | Per-user installer or self-contained ZIP | Per-user installer or ZIP; GUI and removable Explorer menu |
+| Capability | WhereFrom v0.3.0 |
+| --- | --- |
+| Inspect a file | Desktop file picker, drag and drop, Explorer file menu, or CLI with schema v1 JSON |
+| Search download history | Filter locally captured records by filename, domain, browser, and download time |
+| Capture new downloads | Chrome/Edge extension and Native Host save completed downloads to local SQLite |
+| Review file copies and moves | Historical records for matching content are shown as possible associations |
+| Scan a directory | First-level CLI `scan` and bounded `audit` |
 
 Chrome has not been manually tested on the current development machine. The [release checklist](docs/release-validation.md) lists the remaining clean-machine checks.
 
-## Install v0.2.0
+## Install v0.3.0
 
-Download the installer or ZIP from the [v0.2.0 release](https://github.com/WhereFromProject/WhereFrom/releases/tag/v0.2.0), or build on Windows x64 from the repository root:
+Download the installer or ZIP from the [v0.3.0 release](https://github.com/WhereFromProject/WhereFrom/releases/tag/v0.3.0), or build on Windows x64 from the repository root:
 
 ```powershell
 ./scripts/publish.ps1
 ./scripts/build-installer.ps1
 ```
 
-The second command requires [Inno Setup 6](https://jrsoftware.org/isinfo.php). Outputs are `artifacts/WhereFrom-0.2.0-win-x64.zip`, `artifacts/WhereFrom-0.2.0-win-x64-Setup.exe`, and `artifacts/SHA256SUMS.txt`. These packages are unsigned.
+The second command requires [Inno Setup 6](https://jrsoftware.org/isinfo.php). Outputs are `artifacts/WhereFrom-0.3.0-win-x64.zip`, `artifacts/WhereFrom-0.3.0-win-x64-Setup.exe`, and `artifacts/SHA256SUMS.txt`. These packages are unsigned.
 
 The installer runs for the current user without elevation, adds the CLI to the user PATH, registers the Native Host, and installs the GUI and the single-file Explorer menu. Open a new terminal after installation. Reinstalling keeps the existing installation directory; to change it, uninstall first. Uninstall removes installer-owned PATH, Host, and menu registrations while leaving `%LOCALAPPDATA%\WhereFrom\wherefrom.db` in place. The ZIP changes no system registrations by itself and includes registration/removal scripts. Both formats bundle .NET and need a writable user temporary directory.
 
 Load the extension manually in Chrome or Edge Developer mode using [the browser setup guide](docs/browser-setup.txt), also included in the package as `BROWSER-SETUP.txt`. It records only new completed downloads, not past history; failed, canceled, and incognito downloads are not saved. Browser extension removal is manual.
 
-The v0.1.1 installer and ZIP remain available for users who only need the original CLI.
+The desktop app and CLI can read Windows file metadata without the browser extension. Download history shows records that WhereFrom has already captured locally.
 
 ## Use WhereFrom
 
@@ -121,7 +119,7 @@ dotnet restore WhereFrom.sln
 dotnet test WhereFrom.sln -c Release -p:Platform=x64
 node --test extension/test/worker.test.js
 ./scripts/publish.ps1
-./scripts/check-repository-hygiene.ps1 -Package artifacts/WhereFrom-0.2.0-win-x64.zip
+./scripts/check-repository-hygiene.ps1 -Package artifacts/WhereFrom-0.3.0-win-x64.zip
 ```
 
 The [Windows workflow](.github/workflows/windows.yml) also builds and tests the installer. See [ENGINEERING.md](ENGINEERING.md) for architecture and maintenance rules, and [docs/README.md](docs/README.md) for user and release documentation. Open an [issue](https://github.com/WhereFromProject/WhereFrom/issues) with a reproducible example and redacted output.
